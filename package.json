@@ -1,0 +1,25 @@
+{
+  "name": "server",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "build": "tsc-watch --onSuccess \"npm run start\"",
+    "start": "node ./build/app.js",
+    "dev": "ts-node src/app.ts",
+    "lint": "eslint 'src/**/*.{ts,js}'"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "devDependencies": {
+    "@eslint/js": "^9.3.0",
+    "@typescript-eslint/eslint-plugin": "^5.60.0",
+    "@typescript-eslint/parser": "^5.60.0",
+    "eslint": "^8.57.0",
+    "ts-node": "^10.9.2",
+    "tsc-watch": "^6.2.0",
+    "typescript": "^5.4.5",
+    "typescript-eslint": "^7.10.0"
+  }
+}
