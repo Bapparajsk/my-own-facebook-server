@@ -5,6 +5,7 @@ import {sendOtp} from "../helper/sendOTP";
 import {verifyOtp, verifyUser} from "../middleware/verifyOtp";
 import {addToBlacklist} from "../utils/blacklist";
 import bcrypt from "bcrypt";
+import passport from "../config/passport.config";
 
 const router = express.Router();
 
@@ -146,5 +147,29 @@ router.post('/login', async (req, res) => {
         });
     }
 });
+
+router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
+
+router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/' }),
+    (req, res) => {
+        res.redirect('http://localhost:3000/');
+    }
+);
+
+router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
+
+router.get('/github/callback', passport.authenticate('github', { failureRedirect: '/login'}), (req, res) => {
+    console.log("req.user", req.user);
+    res.json({
+        success: true,
+        token: req.headers.authorization,
+    });
+});
+
+router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
+router.get('/facebook/callback', passport.authenticate('facebook', {
+    failureRedirect: '/login',
+    successRedirect: 'http://localhost:3000/',
+}));
 
 export default router;
