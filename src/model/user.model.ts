@@ -1,52 +1,35 @@
 import {model, Schema} from "mongoose";
-import {User} from '../types/schema.type'
+import {UserSchemaType} from '../interfaces/schema.type'
 import bcrypt from "bcrypt";
 
-const userSchema = new Schema<User>({
-    name: {
-        type: String,
-        required: true,
-        unique: true
+const userSchema: Schema<UserSchemaType> = new Schema({
+    name: { type: String, required: true },
+    emails: [{ value: { type: String, required: true } }],
+    password: { type: String, required: false },
+    profileImage: {
+        coverImageURL: { type: String, required: false },
+        profileImageURL: { type: String, required: false },
     },
-    email: {
-        type: [],
-        required: true
+    socialLink: {
+        googleId: { type: String, required: false },
+        githubId: { type: String, required: false },
+        facebookId: { type: String, required: false },
     },
-    password: {
-        type: String,
-        required: true,
-    },
-    profileImage : {
-        type: String,
-    },
-    post: {
-        type: []
-    },
-    reel: {
-        type: []
-    },
-    friends: {
-        type: []
-    },
-    friendRequest: {
-        type: []
-    },
-    friendRequestSend: {
-        type: []
-    },
-    createdAt: {
-        type: Date,
-        default: Date.now()
-    }
-})
+    post: [{ postId: { type: Schema.Types.ObjectId, ref: 'Post', required: true } }],
+    reel: [{ reelId: { type: Schema.Types.ObjectId, ref: 'Reel', required: true } }],
+    friends: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
+    friendRequest: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
+    friendRequestSend: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
+    createdAt: { type: Date, default: Date.now },
+});
 
 userSchema.pre("save", async function (next) {
-    const user = this as User;
+    const user = this as UserSchemaType;
 
     if (!user.isModified("password")) return next();
 
     try {
-        const salt = await bcrypt.genSalt(10);
+        const salt: string = process.env.PASSWORD_SALT!;
         user.password = await bcrypt.hash(user.password, salt);
     } catch (err) {
         console.log('err', err);
@@ -55,6 +38,6 @@ userSchema.pre("save", async function (next) {
     }
 });
 
-const userModel = model<User>('User', userSchema);
+const UserModel = model<UserSchemaType>('User', userSchema);
 
-export default userModel;
+export default UserModel;

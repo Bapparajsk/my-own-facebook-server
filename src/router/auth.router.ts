@@ -6,6 +6,7 @@ import {verifyOtp, verifyUser} from "../middleware/verifyOtp";
 import {addToBlacklist} from "../utils/blacklist";
 import bcrypt from "bcrypt";
 import passport from "../config/passport.config";
+import {UserSchemaType} from '../interfaces/schema.type'
 
 const router = express.Router();
 
@@ -81,11 +82,14 @@ router.post('/verify-otp', verifyOtp, async (req, res) => {
         const user = req.user;
         // @ts-ignore
         const {userName, email, password} = user;
-        // console.log(name, email, password);
-        const newUser = new userModel({ name: userName, email, password });
-        const token = createJwtFromUser(<User>{userId: newUser._id, userName, email});
-
+        const userDetails = {
+            name: userName,
+            emails: [{value: email}],
+            password: password
+        }
+        const newUser = new userModel(userDetails);
         await newUser.save();
+        const token = createJwtFromUser(<User>{userId: newUser._id, userName, email});
 
         return res.status(200).json({
             success: true,
@@ -150,26 +154,79 @@ router.post('/login', async (req, res) => {
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 
-router.get('/google/callback', passport.authenticate('google', { failureRedirect: '/' }),
-    (req, res) => {
-        res.redirect('http://localhost:3000/');
-    }
-);
+router.get('/google/callback', (req, res, next) => {
+    passport.authenticate('google', (err: any, user: Express.User, info: any) => {
+        if (err) {
+            // Handle the error and redirect
+            return res.redirect('http://localhost:3000/login?invalid=true');
+        }
+        if (!user) {
+            // No user found, handle accordingly
+            return res.redirect('http://localhost:3000/login?invalid=true');
+        }
+
+        req.logIn(user, (err) => {
+            if (err) {
+                // Handle login error
+                return res.redirect('http://localhost:3000/login?invalid=true');
+            }
+
+            const {_id, name} = user as UserSchemaType;
+            const token = createJwtFromUser(<User>{userId: _id, userName: name});
+            return res.redirect(`http://localhost:3000/profile?token=${token}`);
+        });
+    })(req, res, next);
+});
 
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
 
-router.get('/github/callback', passport.authenticate('github', { failureRedirect: '/login'}), (req, res) => {
-    console.log("req.user", req.user);
-    res.json({
-        success: true,
-        token: req.headers.authorization,
-    });
-});
+router.get('/github/callback', (req, res, next) => {
+    passport.authenticate('github', (err: any, user: Express.User, info: any) => {
+        if (err) {
+            // Handle the error and redirect
+            return res.redirect('http://localhost:3000/login?invalid=true');
+        }
+        if (!user) {
+            // No user found, handle accordingly
+            return res.redirect('http://localhost:3000/login?invalid=true');
+        }
 
+        req.logIn(user, (err) => {
+            if (err) {
+                // Handle login error
+                return res.redirect('http://localhost:3000/login?invalid=true');
+            }
+
+            const {_id, name} = user as UserSchemaType;
+            const token = createJwtFromUser(<User>{userId: _id, userName: name});
+            return res.redirect(`http://localhost:3000/profile?token=${token}`);
+        });
+    })(req, res, next);
+});
 router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
-router.get('/facebook/callback', passport.authenticate('facebook', {
-    failureRedirect: '/login',
-    successRedirect: 'http://localhost:3000/',
-}));
+
+router.get('/facebook/callback', (req, res, next) => {
+    passport.authenticate('facebook', (err: any, user: Express.User, info: any) => {
+        if (err) {
+            // Handle the error and redirect
+            return res.redirect('http://localhost:3000/login?invalid=true');
+        }
+        if (!user) {
+            // No user found, handle accordingly
+            return res.redirect('http://localhost:3000/login?invalid=true');
+        }
+
+        req.logIn(user, (err) => {
+            if (err) {
+                // Handle login error
+                return res.redirect('http://localhost:3000/login?invalid=true');
+            }
+
+            const {_id, name} = user as UserSchemaType;
+            const token = createJwtFromUser(<User>{userId: _id, userName: name});
+            return res.redirect(`http://localhost:3000/profile?token=${token}`);
+        });
+    })(req, res, next);
+});
 
 export default router;
