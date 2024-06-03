@@ -1,20 +1,11 @@
 import jwt from 'jsonwebtoken'
+import { UserPayload } from '../@types/types'
 
-
-export interface User {
-    userId?: string
-    userName: string
-    email?: string
-    password?: string
-    otp?: string
+const init = (user: UserPayload, timeout: string) => {
+    const SECRET = process.env.JWT_SECRET!;
+    return jwt.sign( user, SECRET, { expiresIn: timeout })
 }
 
-export const createJWT = (user: User): string => {
-    const SECRET = process.env.JWT_SECRET || "your-secret";
-    return jwt.sign(user, SECRET, {expiresIn: '5m'});
-}
-
-export const createJwtFromUser = (user: User): string => {
-    const SECRET = process.env.JWT_SECRET || "your-secret";
-    return jwt.sign(user, SECRET, {expiresIn: '30d'});
-}
+export const createJWT = (user: UserPayload): string => init(user, '5m');
+export const createJwtFromUser = (user: UserPayload): string => init(user, '30d');
+export const createEmailSessionsInJwt = (user: UserPayload): string => init(user, '2m');

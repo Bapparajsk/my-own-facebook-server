@@ -1,5 +1,6 @@
 import express from "express";
-import {createJWT, createJwtFromUser, User} from "../helper/jsonwebtoken";
+import {createJWT, createJwtFromUser} from "../helper/jsonwebtoken";
+import { UserPayload } from '../@types/types';
 import userModel from "../model/user.model";
 import {sendOtp} from "../helper/sendOTP";
 import {verifyOtp, verifyUser} from "../middleware/verifyOtp";
@@ -30,7 +31,7 @@ router.post('/register', async (req, res) => {
                 message: 'email are not valid'
             });
         }
-        const newToken = createJWT(<User>{userName, email, password, otp: mail.otp});
+        const newToken = createJWT(<UserPayload>{userName, email, password, otp: mail.otp});
 
         return res.status(200).json({
             success: true,
@@ -58,7 +59,7 @@ router.post('/send-otp', verifyUser, async (req, res) => {
             });
         }
 
-        const newToken = createJWT(<User>{userName, email, password, otp: mail.otp});
+        const newToken = createJWT(<UserPayload>{userName, email, password, otp: mail.otp});
         const {token} = req.headers;
         if (token) addToBlacklist(token);
 
@@ -79,9 +80,9 @@ router.post('/send-otp', verifyUser, async (req, res) => {
 
 router.post('/verify-otp', verifyOtp, async (req, res) => {
     try {
-        const user = req.user;
-        // @ts-ignore
-        const {userName, email, password} = user;
+        const user = req.user as UserPayload;
+
+        const {userName, email, password} = user ;
         const userDetails = {
             name: userName,
             emails: [{value: email}],
@@ -89,7 +90,7 @@ router.post('/verify-otp', verifyOtp, async (req, res) => {
         }
         const newUser = new userModel(userDetails);
         await newUser.save();
-        const token = createJwtFromUser(<User>{userId: newUser._id, userName, email});
+        const token = createJwtFromUser(<UserPayload>{userId: newUser._id, userName, email});
 
         return res.status(200).json({
             success: true,
@@ -117,7 +118,7 @@ router.post('/login', async (req, res) => {
             });
         }
 
-        const User = await userModel.findOne({ email: {$in: [email]} });
+        const User = await userModel.findOne({ 'emails.value': email });
 
         if (!User) {
             return res.status(401).json({
@@ -134,7 +135,7 @@ router.post('/login', async (req, res) => {
             })
         }
 
-        const token = createJwtFromUser(<User>{userId: User._id, userName: User.name, email});
+        const token = createJwtFromUser(<UserPayload>{userId: User._id, userName: User.name, email});
 
         return res.status(200).json({
             success: true,
@@ -172,7 +173,7 @@ router.get('/google/callback', (req, res, next) => {
             }
 
             const {_id, name} = user as UserSchemaType;
-            const token = createJwtFromUser(<User>{userId: _id, userName: name});
+            const token = createJwtFromUser(<UserPayload>{userId: _id, userName: name});
             return res.redirect(`http://localhost:3000/profile?token=${token}`);
         });
     })(req, res, next);
@@ -198,7 +199,7 @@ router.get('/github/callback', (req, res, next) => {
             }
 
             const {_id, name} = user as UserSchemaType;
-            const token = createJwtFromUser(<User>{userId: _id, userName: name});
+            const token = createJwtFromUser(<UserPayload>{userId: _id, userName: name});
             return res.redirect(`http://localhost:3000/profile?token=${token}`);
         });
     })(req, res, next);
@@ -223,10 +224,11 @@ router.get('/facebook/callback', (req, res, next) => {
             }
 
             const {_id, name} = user as UserSchemaType;
-            const token = createJwtFromUser(<User>{userId: _id, userName: name});
+            const token = createJwtFromUser(<UserPayload>{userId: _id, userName: name});
             return res.redirect(`http://localhost:3000/profile?token=${token}`);
         });
     })(req, res, next);
 });
+
 
 export default router;

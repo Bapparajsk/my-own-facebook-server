@@ -1,17 +1,12 @@
 import {NextFunction, Request, Response} from "express";
 import jwt from 'jsonwebtoken';
 import {addToBlacklist, isBlacklisted} from "../utils/blacklist";
+import {UserPayload} from "../@types/types";
 
-interface UserPayload {
-    userName: string;
-    email: string;
-    password: string;
-    otp: string;
-}
 
 export const verifyOtp = (req: Request , res: Response, next: NextFunction) => {
     const { otp } = req.body;
-    const { token } = req.headers;
+    const token = req.headers['token'] as string;
 
     if (token && isBlacklisted(token)) {
         return res.status(401).send({
@@ -27,12 +22,10 @@ export const verifyOtp = (req: Request , res: Response, next: NextFunction) => {
         });
     }
 
-    const SECRET = process.env.JWT_SECRET || "your-secret";
+    const SECRET = process.env.JWT_SECRET!;
 
     try {
-        // @ts-ignore
         const decoded = jwt.verify(token, SECRET) as UserPayload;
-        console.log("decoded otp", decoded.otp);
         if (decoded.otp === otp) {
             req.user = decoded;
             addToBlacklist(token);
@@ -46,7 +39,7 @@ export const verifyOtp = (req: Request , res: Response, next: NextFunction) => {
 }
 
 export const verifyUser = (req: Request , res: Response, next: NextFunction) => {
-    const { token } = req.headers;
+    const token = req.headers['token'] as string;
 
     if (token && isBlacklisted(token)) {
         return res.status(401).send({
@@ -62,10 +55,8 @@ export const verifyUser = (req: Request , res: Response, next: NextFunction) => 
         });
     }
 
-    const SECRET = process.env.JWT_SECRET || "your-secret";
-
     try {
-        // @ts-ignore
+        const SECRET = process.env.JWT_SECRET!;
         req.user = jwt.verify(token, SECRET) as UserPayload;
         next();
     } catch (err) {

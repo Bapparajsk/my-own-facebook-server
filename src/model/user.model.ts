@@ -1,10 +1,16 @@
 import {model, Schema} from "mongoose";
-import {UserSchemaType} from '../interfaces/schema.type'
+import { UserSchemaType, OtpSchema } from '../interfaces/schema.type'
 import bcrypt from "bcrypt";
+
+const OtpSchema = new Schema<OtpSchema>({
+    otp: { type: String, default: null },
+    value: { type: String, default: null }
+});
 
 const userSchema: Schema<UserSchemaType> = new Schema({
     name: { type: String, required: true },
-    emails: [{ value: { type: String, required: true } }],
+    nameUpdateTime: { type: Date, required: true, default: Date.now },
+    emails: [ { value: { type: String, required: true }} ],
     password: { type: String, required: false },
     profileImage: {
         coverImageURL: { type: String, required: false },
@@ -14,6 +20,10 @@ const userSchema: Schema<UserSchemaType> = new Schema({
         googleId: { type: String, required: false },
         githubId: { type: String, required: false },
         facebookId: { type: String, required: false },
+    },
+    otp: {
+        email: { type: OtpSchema, default: {} },
+        phoneNumber: { type: OtpSchema, default: {} }
     },
     post: [{ postId: { type: Schema.Types.ObjectId, ref: 'Post', required: true } }],
     reel: [{ reelId: { type: Schema.Types.ObjectId, ref: 'Reel', required: true } }],
@@ -29,7 +39,8 @@ userSchema.pre("save", async function (next) {
     if (!user.isModified("password")) return next();
 
     try {
-        const salt: string = process.env.PASSWORD_SALT!;
+        console.log('hash password')
+        const salt = await bcrypt.genSalt(10);
         user.password = await bcrypt.hash(user.password, salt);
     } catch (err) {
         console.log('err', err);

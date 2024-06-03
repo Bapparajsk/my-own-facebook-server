@@ -4,13 +4,15 @@ import express, {Express} from 'express';
 import cors from 'cors';
 import logger  from 'morgan';
 import helmet from 'helmet';
-import authRouter from "./router/auth.router";
 import passport from "./config/passport.config";
 import session from 'express-session';
 
-const app: Express = express();
-const PORT = Number(process.env.PORT) || 8000;
+import AuthRouter from "./router/auth.router";
+import AddRouter from './router/updateSetting.router';
 
+const app: Express = express();
+
+// middlewares
 app.use(cors({
     origin: 'http://localhost:3000', // Allow only this origin
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allow these HTTP methods
@@ -29,8 +31,9 @@ app.use(session({
 app.use(passport.initialize());
 app.use(passport.session());
 
-app.use('/auth', authRouter);
+// route paths
+app.use('/auth', AuthRouter);
+app.use('/api/add', AddRouter);
 
-app.listen(PORT, () => {
-    console.log(`Listening on port http://127.0.0.1:${PORT}`);
-});
+
+export default app;
