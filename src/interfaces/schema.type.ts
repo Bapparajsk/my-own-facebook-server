@@ -1,10 +1,9 @@
-import {Document, Schema} from 'mongoose'
+import {Document} from 'mongoose'
 
 export interface OtpSchema {
     otp: string | null;
     value: string | null;
 }
-
 
 export interface UserSchemaType extends Document {
     name: string

@@ -2,6 +2,7 @@ import express from "express";
 import Auth from "../middleware/auth";
 import {UserSchemaType} from "../interfaces/schema.type";
 import {sendOtp} from "../helper/sendOTP";
+import bcrypt from "bcrypt";
 
 const router = express.Router();
 
@@ -67,6 +68,51 @@ router.post('/verify-otp', Auth.verifyOtpFromEmail, async (req, res) => {
             message: 'internal server error',
         })
     }
-})
+});
+
+router.post('/change-password', Auth.Authentication, async (req, res) => {
+    try {
+        const {password, newPassword} = req.body as {password: string, newPassword: string};
+
+        if (newPassword.length < 8 || !password) {
+            return res.status(401).json({
+                success: false,
+                message: 'password must be at least 8 characters'
+            });
+        }
+
+        const isSamePassword = await bcrypt.compare(password, newPassword);
+        if (isSamePassword) {
+            return res.status(401).json({
+                success: false,
+                message: 'you use prev password please try difference password',
+            });
+        }
+
+        const user = req.User as UserSchemaType;
+        const isMach = await bcrypt.compare(password, user.password);
+
+        if (!isMach) {
+            return res.status(401).json({
+                success: false,
+                message: 'invalid password',
+            });
+        }
+
+        user.password = newPassword;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'change password successfully',
+        });
+
+    } catch (error) {
+        return res.status(401).send({
+            success: false,
+            message: 'internal server error',
+        })
+    }
+});
 
 export default router;
