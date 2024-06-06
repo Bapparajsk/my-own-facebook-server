@@ -1,5 +1,5 @@
 import {model, Schema} from "mongoose";
-import { UserSchemaType, OtpSchema } from '../interfaces/schema.type'
+import { UserSchemaType, OtpSchema, DateOfBirthType } from '../interfaces/schema.type'
 import bcrypt from "bcrypt";
 
 const OtpSchema = new Schema<OtpSchema>({
@@ -7,9 +7,18 @@ const OtpSchema = new Schema<OtpSchema>({
     value: { type: String, default: null }
 });
 
+const DateOfBirthSchema = new Schema<DateOfBirthType>({
+    day: { type: Number, required: false },
+    month: { type: Number, required: false },
+    year: { type: Number, required: false }
+})
+
 const userSchema: Schema<UserSchemaType> = new Schema({
     name: { type: String, required: true },
+    active: { type: Boolean, default: true },
     nameUpdateTime: { type: Date, required: true, default: Date.now },
+    dateOfBirth: { type: DateOfBirthSchema, default: {} },
+    notificationToken: { type: String, required: false, default: null },
     emails: [ { value: { type: String, required: true }} ],
     password: { type: String, required: false },
     profileImage: {
@@ -30,6 +39,12 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     friends: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
     friendRequest: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
     friendRequestSend: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
+    chat: [{
+        chatId: { type: String, ref: 'Chat', required: true },
+        userId: { type: String, ref: 'Friend', required: true },
+        name: { type: String, required: true },
+        profileImage: { type: String, required: false },
+    }],
     createdAt: { type: Date, default: Date.now },
 });
 

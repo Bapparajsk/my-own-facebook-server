@@ -230,5 +230,4 @@ router.get('/facebook/callback', (req, res, next) => {
     })(req, res, next);
 });
 
-
 export default router;

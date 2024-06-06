@@ -2,13 +2,13 @@ import { Schema, model, Document } from 'mongoose';
 
 // TypeScript interface
 export interface ChatSchemaType extends Document {
-    usersId: string;
+    hashId: string;
     chat: { name: string; message: string }[];
 }
 
 // Mongoose schema
 const chatSchema = new Schema<ChatSchemaType>({
-    usersId: {
+    hashId: {
         type: String,
         required: true,
     },
@@ -26,6 +26,4 @@ const chatSchema = new Schema<ChatSchemaType>({
     ],
 }, { timestamps: true });
 
-const Chat = model<ChatSchemaType>('Chat', chatSchema);
-
-export default Chat;
+export const ChatModel = model<ChatSchemaType>('Chat', chatSchema);

@@ -1,6 +1,7 @@
 import app from '../app'
 import {createServer} from "http";
 import {Server} from "socket.io";
+import {handleConnection} from "../socketIo/Io";
 
 const PORT = Number(process.env.PORT) || 8000;
 const httpServer = createServer(app);
@@ -12,10 +13,11 @@ const io = new Server(httpServer, {
     }
 });
 
-io.on('connection', (socket) => {
-    console.log(socket.id);
 
+io.on('connection', (socket) => {
+    handleConnection(socket);
 });
+
 
 httpServer.listen(PORT, () => {
     console.log(`Listening on port http://127.0.0.1:${PORT}`);

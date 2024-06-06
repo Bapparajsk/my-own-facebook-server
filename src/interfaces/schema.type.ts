@@ -5,9 +5,25 @@ export interface OtpSchema {
     value: string | null;
 }
 
+export interface ChatType {
+    chatId: unknown
+    userId: unknown
+    name: string
+    profileImage: string | undefined
+}
+
+export interface DateOfBirthType {
+    day: number,
+    month: number,
+    year: number
+}
+
 export interface UserSchemaType extends Document {
     name: string
-    nameUpdateTime?: Date,
+    active: boolean
+    nameUpdateTime: Date,
+    dateOfBirth: DateOfBirthType,
+    notificationToken: string,
     emails: { value: string }[]
     password: string
     profileImage: {
@@ -28,5 +44,6 @@ export interface UserSchemaType extends Document {
     friends: { name: string, image: string }[]
     friendRequest: { name: string, image: string }[]
     friendRequestSend: { name: string, image: string }[]
+    chat: ChatType[]
     createdAt: Date
 }

@@ -35,5 +35,4 @@ app.use(passport.session());
 app.use('/auth', AuthRouter);
 app.use('/api/add', AddRouter);
 
-
 export default app;

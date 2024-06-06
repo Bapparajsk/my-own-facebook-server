@@ -115,4 +115,65 @@ router.post('/change-password', Auth.Authentication, async (req, res) => {
     }
 });
 
+router.post('/notification-token', Auth.Authentication, async (req, res) => {
+    try {
+        const notificationToken = req.body.notificationToken as string;
+        const user = req.User as UserSchemaType;
+        user.notificationToken = notificationToken;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'notification token add successful',
+        })
+    }catch (error) {
+        return res.status(401).send({
+            success: false,
+            message: 'internal server error',
+        })
+    }
+});
+
+router.post('/change-username', Auth.Authentication, async (req, res) => {
+    try {
+        const newUsername = req.body.username as string;
+        const user = req.User as UserSchemaType;
+
+        if (!newUsername || newUsername.length < 5) {
+            return res.status(401).json({
+                success: false,
+                message: 'invalid username',
+            });
+        }
+
+        const currentTime = new Date();
+        const lastUpdateTime = new Date(user.nameUpdateTime!);
+        const daysPassed = Math.floor((currentTime.getTime() - lastUpdateTime.getTime()) / (1000 * 60 * 60 * 24));
+
+        if (daysPassed < 60) {
+            return res.status(400).json({
+                success: false,
+                message: 'Username can only be changed after 60 days'
+            });
+        }
+
+        user.name = newUsername;
+        user.nameUpdateTime = currentTime;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'change username successfully',
+        })
+
+    } catch (error) {
+        return res.status(401).send({
+            success: false,
+            message: 'internal server error',
+        })
+    }
+});
+
+
+
 export default router;
