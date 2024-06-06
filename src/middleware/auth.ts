@@ -2,7 +2,7 @@ import {NextFunction, Request, Response} from "express";
 import jwt from "jsonwebtoken";
 import {UserPayload} from "../@types/types";
 import UserModel from "../model/user.model";
-import {UserSchemaType} from "../interfaces/schema.type";
+import {UserSchemaType} from "../interfaces/userSchema.type";
 
 const SECRET = process.env.JWT_SECRET!;
 

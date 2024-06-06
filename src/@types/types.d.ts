@@ -1,6 +1,6 @@
 // src/types/types.d.ts
 import { Request } from 'express';
-import {UserSchemaType} from "../interfaces/schema.type";
+import {UserSchemaType} from "../interfaces/userSchema.type";
 
 interface UserPayload {
     userId?: string

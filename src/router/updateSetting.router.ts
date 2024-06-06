@@ -1,6 +1,6 @@
 import express from "express";
 import Auth from "../middleware/auth";
-import {UserSchemaType} from "../interfaces/schema.type";
+import {DateOfBirthType, UserSchemaType} from "../interfaces/userSchema.type";
 import {sendOtp} from "../helper/sendOTP";
 import bcrypt from "bcrypt";
 
@@ -174,6 +174,32 @@ router.post('/change-username', Auth.Authentication, async (req, res) => {
     }
 });
 
+router.post('/change-date-of-birth', Auth.Authentication, async (req, res) => {
+    try {
+        const date = req.body.dateOfBirth as DateOfBirthType;
+        const user = req.User as UserSchemaType;
 
+        if (!date) {
+            return res.status(401).json({
+                success: false,
+                message: 'invalid date',
+            });
+        }
+
+        user.dateOfBirth = date;
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'change dateOfBirth successfully',
+        })
+
+    } catch (error) {
+        return res.status(401).send({
+            success: false,
+            message: 'internal server error',
+        })
+    }
+});
 
 export default router;

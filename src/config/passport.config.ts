@@ -1,6 +1,6 @@
 import passport from 'passport';
 import UserModel from "../model/user.model";
-import { UserSchemaType } from '../interfaces/schema.type'
+import { UserSchemaType } from '../interfaces/userSchema.type'
 import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy} from 'passport-github2';
 import { Strategy as FacebookStrategy } from 'passport-facebook';

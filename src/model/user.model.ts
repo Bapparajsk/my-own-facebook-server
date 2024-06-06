@@ -1,5 +1,5 @@
 import {model, Schema} from "mongoose";
-import { UserSchemaType, OtpSchema, DateOfBirthType } from '../interfaces/schema.type'
+import { UserSchemaType, OtpSchema, DateOfBirthType } from '../interfaces/userSchema.type'
 import bcrypt from "bcrypt";
 
 const OtpSchema = new Schema<OtpSchema>({

@@ -4,7 +4,7 @@ import { addTaskInQueue } from '../lib/bullmqProducer';
 import { ChatModel } from "../model/chat.model";
 import userHashId from "../lib/userHashId";
 import UserModel from "../model/user.model";
-import {UserSchemaType} from "../interfaces/schema.type";
+import {UserSchemaType} from "../interfaces/userSchema.type";
 
 
 export function handleConnection(socket: Socket) {

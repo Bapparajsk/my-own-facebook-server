@@ -1,4 +1,4 @@
-import {UserSchemaType} from "../interfaces/schema.type";
+import {UserSchemaType} from "../interfaces/userSchema.type";
 import UserModel from "../model/user.model";
 
 export const StrategyVerify = async (accessToken: any, refreshToken: any, profile: any, done: (arg0: unknown, arg1: unknown) => any) => {

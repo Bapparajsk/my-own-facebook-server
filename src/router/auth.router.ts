@@ -7,7 +7,7 @@ import {verifyOtp, verifyUser} from "../middleware/verifyOtp";
 import {addToBlacklist} from "../utils/blacklist";
 import bcrypt from "bcrypt";
 import passport from "../config/passport.config";
-import {UserSchemaType} from '../interfaces/schema.type'
+import {UserSchemaType} from '../interfaces/userSchema.type'
 
 const router = express.Router();
 
