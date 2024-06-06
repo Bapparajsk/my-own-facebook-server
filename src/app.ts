@@ -7,10 +7,9 @@ import helmet from 'helmet';
 import passport from "./config/passport.config";
 import session from 'express-session';
 
-import { getObjectURL, putObjectURL } from './lib/awsS3';
-
 import AuthRouter from "./router/auth.router";
 import AddRouter from './router/updateSetting.router';
+import PostRouter from './router/post.router';
 
 const app: Express = express();
 
@@ -36,6 +35,6 @@ app.use(passport.session());
 // route paths
 app.use('/auth', AuthRouter);
 app.use('/api/add', AddRouter);
-
+app.use('/api/post', PostRouter);
 
 export default app;

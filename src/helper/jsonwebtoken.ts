@@ -8,4 +8,3 @@ const init = (user: UserPayload, timeout: string) => {
 
 export const createJWT = (user: UserPayload): string => init(user, '5m');
 export const createJwtFromUser = (user: UserPayload): string => init(user, '30d');
-export const createEmailSessionsInJwt = (user: UserPayload): string => init(user, '2m');

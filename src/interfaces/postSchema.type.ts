@@ -9,10 +9,12 @@ export interface  CommentType {
 }
 
 export interface PostSchemaType extends Document {
-    userId: string
+    userId: unknown
+    name: string
+    imageUrl: string
     createdAt: Date
-    description: string
-    contentId: string
+    description: any
+    contentUrl: string
     likeCount: number
     commentCount: number
     shareCount: number

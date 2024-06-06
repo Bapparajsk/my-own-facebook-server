@@ -39,7 +39,7 @@ export interface UserSchemaType extends Document {
         email?: OtpSchema | null
         phoneNumber?: OtpSchema | null
     },
-    post: { postId: string }[]
+    post: { postId: unknown }[]
     reel: { reelId: string }[]
     friends: { name: string, image: string }[]
     friendRequest: { name: string, image: string }[]

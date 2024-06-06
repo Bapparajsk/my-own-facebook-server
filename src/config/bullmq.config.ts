@@ -7,6 +7,5 @@ const QueueConfig: QueueOptions = {
     }
 }
 
-const taskQueue = new Queue("notificationQueue", QueueConfig)
-
-export default taskQueue;
+export const newChatNotificationQueue = new Queue("newChatNotificationQueue", QueueConfig)
+export const newPostNotificationQueue = new Queue("newPostNotificationQueue", QueueConfig)

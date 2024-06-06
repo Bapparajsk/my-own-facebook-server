@@ -13,8 +13,7 @@ const workerOptions: WorkerOptions = {
     removeOnComplete: { count: 2 }, // Use the correct option name here
 };
 
-const worker = new Worker('sendNotification', async job => {
-    console.log('Processing job:', job.data);
+const worker1 = new Worker('newChatNotificationQueue', async job => {
     const { token, name, message, imageUrl } = job.data;
 
     const Message = {
@@ -31,6 +30,6 @@ const worker = new Worker('sendNotification', async job => {
 }, workerOptions);
 
 // Handle errors
-worker.on('failed', (job, err) => {
+worker1.on('failed', (job, err) => {
     console.error(`Job failed with id ${job?.id}`, err);
 });

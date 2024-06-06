@@ -34,8 +34,8 @@ const userSchema: Schema<UserSchemaType> = new Schema({
         email: { type: OtpSchema, default: {} },
         phoneNumber: { type: OtpSchema, default: {} }
     },
-    post: [{ postId: { type: Schema.Types.ObjectId, ref: 'Post', required: true } }],
-    reel: [{ reelId: { type: Schema.Types.ObjectId, ref: 'Reel', required: true } }],
+    post: [{ postId: { type: String, ref: 'Post', required: true } }],
+    reel: [{ reelId: { type: String, ref: 'Reel', required: true } }],
     friends: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
     friendRequest: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
     friendRequestSend: [{ name: { type: String, required: true }, image: { type: String, required: true } }],

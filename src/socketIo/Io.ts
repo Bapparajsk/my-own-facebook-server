@@ -1,6 +1,6 @@
 import { Socket } from 'socket.io';
 import Map from '../lib/activeUserList';
-import { addTaskInQueue } from '../lib/bullmqProducer';
+import { addTaskInQueueFromNewChatNotification } from '../lib/bullmqProducer';
 import { ChatModel } from "../model/chat.model";
 import userHashId from "../lib/userHashId";
 import UserModel from "../model/user.model";
@@ -97,7 +97,7 @@ export function handleConnection(socket: Socket) {
 
                 //send notification in friend browser using firebase
                 if (friendData.notificationToken !== null) {
-                    addTaskInQueue(friendData.notificationToken, userData.name, message, userData.profileImage.profileImageURL)
+                    addTaskInQueueFromNewChatNotification(friendData.notificationToken, userData.name, message, userData.profileImage.profileImageURL)
                         .catch((error) => console.log("notification can't send"));
                 }
             }
