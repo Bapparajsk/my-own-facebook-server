@@ -11,7 +11,7 @@ export function handleConnection(socket: Socket) {
     socket.on('newUser', async (userId: string) => {
         Map.userListBySocketId.set(socket.id, userId);
         Map.userListByUserId.set(userId, socket.id);
-        console.log("new user connect", userId);
+
         try {
             const user = await UserModel.findById(userId) as UserSchemaType;
             if (!user) return;

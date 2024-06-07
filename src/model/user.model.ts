@@ -16,7 +16,7 @@ const DateOfBirthSchema = new Schema<DateOfBirthType>({
 const NotificationSchema = new Schema<NotificationType>({
     userId: { type: String, required: true },
     name: { type: String, required: true },
-    image: { type: String, required: true },
+    image: { type: String || undefined },
     createdAt: { type: Date, default: Date.now },
     description: { type: String, required: true },
     Type: { type: String, required: true },

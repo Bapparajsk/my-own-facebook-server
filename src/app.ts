@@ -10,7 +10,7 @@ import session from 'express-session';
 import AuthRouter from "./router/auth.router";
 import AddRouter from './router/updateSetting.router';
 import PostRouter from './router/post.router';
-import FriendRouter from './router/friend.router';
+import { router } from './router/friend.router';
 
 const app: Express = express();
 
@@ -37,6 +37,6 @@ app.use(passport.session());
 app.use('/auth', AuthRouter);
 app.use('/api/add', AddRouter);
 app.use('/api/post', PostRouter);
-app.use('/api/friend', FriendRouter);
+app.use('/api/friend', router);
 
 export default app;

@@ -9,3 +9,4 @@ const QueueConfig: QueueOptions = {
 
 export const newChatNotificationQueue = new Queue("newChatNotificationQueue", QueueConfig)
 export const newPostNotificationQueue = new Queue("newPostNotificationQueue", QueueConfig)
+export const friendNotificationQueue = new Queue("friendNotificationQueue", QueueConfig)

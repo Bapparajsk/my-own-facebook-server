@@ -21,10 +21,11 @@ export interface DateOfBirthType {
 export interface NotificationType {
     userId: unknown
     name: string
-    image: string
+    image: string | undefined
     createdAt: Date
     description: string
     Type: string
+    token?: string
 }
 
 export interface FriendsType {
@@ -32,7 +33,6 @@ export interface FriendsType {
     name: string
     image: string | undefined
 }
-
 
 export interface UserSchemaType extends Document {
     name: string
@@ -57,9 +57,9 @@ export interface UserSchemaType extends Document {
     },
     post: { postId: unknown }[]
     reel: { reelId: string }[]
-    friends: Map<unknown, {userId: unknown, name: string, image: string | undefined}>
-    friendRequest: Map<unknown, {userId: unknown, name: string, image: string | undefined}>
-    friendRequestSend: Map<unknown, {userId: unknown, name: string, image: string | undefined}>
+    friends: Map<unknown, FriendsType>
+    friendRequest: Map<unknown, FriendsType>
+    friendRequestSend: Map<unknown, FriendsType>
     chat: ChatType[]
     notification: NotificationType[]
     createdAt: Date
