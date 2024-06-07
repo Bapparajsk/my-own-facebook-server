@@ -1,5 +1,5 @@
 import {model, Schema} from "mongoose";
-import { UserSchemaType, OtpSchema, DateOfBirthType } from '../interfaces/userSchema.type'
+import { UserSchemaType, OtpSchema, DateOfBirthType, NotificationType } from '../interfaces/userSchema.type'
 import bcrypt from "bcrypt";
 
 const OtpSchema = new Schema<OtpSchema>({
@@ -11,7 +11,22 @@ const DateOfBirthSchema = new Schema<DateOfBirthType>({
     day: { type: Number, required: false },
     month: { type: Number, required: false },
     year: { type: Number, required: false }
-})
+});
+
+const NotificationSchema = new Schema<NotificationType>({
+    userId: { type: String, required: true },
+    name: { type: String, required: true },
+    image: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    description: { type: String, required: true },
+    Type: { type: String, required: true },
+});
+
+const FriendSchema = new Schema({
+    userId: { type: String, required: true },
+    name: { type: String, required: true },
+    image: { type: String || undefined }
+});
 
 const userSchema: Schema<UserSchemaType> = new Schema({
     name: { type: String, required: true },
@@ -36,15 +51,16 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     },
     post: [{ postId: { type: String, ref: 'Post', required: true } }],
     reel: [{ reelId: { type: String, ref: 'Reel', required: true } }],
-    friends: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
-    friendRequest: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
-    friendRequestSend: [{ name: { type: String, required: true }, image: { type: String, required: true } }],
+    friends: { type: Map, of: FriendSchema, default: {} },
+    friendRequest: { type: Map, of: FriendSchema, default: {} },
+    friendRequestSend: { type: Map, of: FriendSchema, default: {} },
     chat: [{
         chatId: { type: String, ref: 'Chat', required: true },
         userId: { type: String, ref: 'Friend', required: true },
         name: { type: String, required: true },
         profileImage: { type: String, required: false },
     }],
+    notification: [{ type: NotificationSchema, default: null }],
     createdAt: { type: Date, default: Date.now },
 });
 

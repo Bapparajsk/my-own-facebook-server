@@ -70,7 +70,7 @@ router.post('/verify-otp', Auth.verifyOtpFromEmail, async (req, res) => {
     }
 });
 
-router.post('/change-password', Auth.Authentication, async (req, res) => {
+router.patch('/change-password', Auth.Authentication, async (req, res) => {
     try {
         const {password, newPassword} = req.body as {password: string, newPassword: string};
 
@@ -115,7 +115,7 @@ router.post('/change-password', Auth.Authentication, async (req, res) => {
     }
 });
 
-router.post('/notification-token', Auth.Authentication, async (req, res) => {
+router.put('/notification-token', Auth.Authentication, async (req, res) => {
     try {
         const notificationToken = req.body.notificationToken as string;
         const user = req.User as UserSchemaType;
@@ -134,7 +134,7 @@ router.post('/notification-token', Auth.Authentication, async (req, res) => {
     }
 });
 
-router.post('/change-username', Auth.Authentication, async (req, res) => {
+router.patch('/change-username', Auth.Authentication, async (req, res) => {
     try {
         const newUsername = req.body.username as string;
         const user = req.User as UserSchemaType;
@@ -174,7 +174,7 @@ router.post('/change-username', Auth.Authentication, async (req, res) => {
     }
 });
 
-router.post('/change-date-of-birth', Auth.Authentication, async (req, res) => {
+router.patch('/change-date-of-birth', Auth.Authentication, async (req, res) => {
     try {
         const date = req.body.dateOfBirth as DateOfBirthType;
         const user = req.User as UserSchemaType;
