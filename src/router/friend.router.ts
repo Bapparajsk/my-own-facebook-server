@@ -159,4 +159,33 @@ router.patch('/reject-request', Auth.Authentication, async (req: express.Request
     }
 });
 
+router.get('/get', Auth.Authentication, async (req: express.Request, res: express.Response) => {
+    try {
+        const friendId = req.body.friendId as string;
+
+        const friendData = await UserModel.findById(friendId)
+            .select("_id name profileImage post reel friends createdAt");
+
+        if (!friendData) {
+            return res.status(404).send({
+                success: false,
+                message: 'friend not found',
+            })
+        }
+
+        return res.status(200).json({
+            success: true,
+            message: 'Successfully getting friend request',
+            friendData
+        });
+
+    } catch (error) {
+        console.log(error)
+        res.status(400).send({
+            success: false,
+            message: 'Something went wrong',
+        });
+    }
+});
+
 export { router };

@@ -13,10 +13,11 @@ const CommentSchema: Schema<CommentType> = new Schema({
 const PostSchema: Schema<PostSchemaType> = new Schema({
     userId: { type: String, required: true },
     name: { type: String, required: true },
-    imageUrl: { type: String, required: true },
+    imageUrl: { type: String || undefined },
     createdAt: { type: Date, default: Date.now },
     description: { type: String, required: true },
     contentUrl: { type: String, required: true },
+    contentType: { type: String, required: true },
     likeCount: { type: Number, default: 0 },
     commentCount: { type: Number, default: 0 },
     shareCount: { type: Number, default: 0 },

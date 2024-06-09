@@ -31,7 +31,6 @@ export const addTaskInQueueFromFriendNotification = async (notification: Notific
         if (token !== null) {
             notification.token = token;
             const s = await friendNotificationQueue.add('friendNotificationQueue', notification);
-            console.log('add noti', s.id);
         }
 
     } catch (error) {
