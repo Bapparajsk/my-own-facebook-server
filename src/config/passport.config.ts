@@ -5,12 +5,14 @@ import { Strategy as GoogleStrategy } from 'passport-google-oauth20';
 import { Strategy as GitHubStrategy} from 'passport-github2';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { StrategyVerify } from '../middleware/AuthenticationCallback';
-
+import {NextFunction, Request, Response} from "express";
+import {createJwtFromUser} from "../helper/jsonwebtoken";
+import {UserPayload} from "../@types/types";
 
 passport.use(<passport.Strategy>new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    callbackURL: '/auth/google/callback'
+    callbackURL: 'http://localhost:8000/auth/google/callback'
 },
     async (accessToken, refreshToken, profile, done) => {
         try {
@@ -52,14 +54,14 @@ passport.use(<passport.Strategy>new GoogleStrategy({
 passport.use(new GitHubStrategy({
     clientID: process.env.GITHUB_CLIENT_ID!,
     clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    callbackURL: '/auth/github/callback',
+    callbackURL: 'http://localhost:8000/auth/github/callback',
     scope: ['id', 'displayName', 'photos', 'email'],
 }, StrategyVerify ));
 
 passport.use(new FacebookStrategy({
     clientID: process.env.FACEBOOK_APP_ID!,
     clientSecret: process.env.FACEBOOK_APP_SECRET!,
-    callbackURL: '/auth/facebook/callback',
+    callbackURL: 'http://localhost:8000/auth/facebook/callback',
     profileFields: ['id', 'displayName', 'photos', 'email']
 }, StrategyVerify));
 
@@ -70,5 +72,24 @@ passport.serializeUser((user, done) => {
 passport.deserializeUser((user: any, done) => {
     done(null, user);
 });
+
+export const authenticateAndRedirect = (strategy: string) => {
+    return (req: Request, res: Response, next: NextFunction) => {
+        passport.authenticate(strategy, (err: any, user: Express.User, info: any) => {
+            if (err || !user) {
+                return res.redirect("http://localhost:3000/login?invalid=true");
+            }
+            req.logIn(user, (err) => {
+                if (err) {
+                    return res.redirect("http://localhost:3000/login?invalid=true");
+                }
+
+                const { _id, name } = user as UserSchemaType;
+                const token = createJwtFromUser(<UserPayload>{ userId: _id, userName: name });
+                return res.redirect(`http://localhost:3000/profile?token=${token}`);
+            });
+        })(req, res, next);
+    };
+};
 
 export default passport;

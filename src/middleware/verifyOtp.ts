@@ -6,7 +6,7 @@ import {UserPayload} from "../@types/types";
 
 export const verifyOtp = (req: Request , res: Response, next: NextFunction) => {
     const { otp } = req.body;
-    const token = req.headers['token'] as string;
+    const token = req.headers['accesstoken'] as string;
 
     if (token && isBlacklisted(token)) {
         return res.status(401).send({
@@ -31,15 +31,21 @@ export const verifyOtp = (req: Request , res: Response, next: NextFunction) => {
             addToBlacklist(token);
             return next();
         } else {
-            return res.status(401).json({ error: 'Invalid OTP' });
+            return res.status(401).json({
+                success: false,
+                message : 'Invalid OTP'
+            });
         }
     } catch (err) {
-        return res.status(401).json({ error: 'Invalid token' });
+        return res.status(401).json({
+            success: false, message: 'Invalid token'
+        });
     }
 }
 
 export const verifyUser = (req: Request , res: Response, next: NextFunction) => {
-    const token = req.headers['token'] as string;
+    const token = req.headers['accesstoken'] as string;
+
 
     if (token && isBlacklisted(token)) {
         return res.status(401).send({
@@ -60,6 +66,9 @@ export const verifyUser = (req: Request , res: Response, next: NextFunction) => 
         req.user = jwt.verify(token, SECRET) as UserPayload;
         next();
     } catch (err) {
-        return res.status(401).json({ error: 'Invalid token' });
+        return res.status(401).json({
+            success: false,
+            message: 'Invalid token'
+        });
     }
 }

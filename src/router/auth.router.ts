@@ -1,4 +1,4 @@
-import express from "express";
+import express, {Request, Response} from "express";
 import {createJWT, createJwtFromUser} from "../helper/jsonwebtoken";
 import { UserPayload } from '../@types/types';
 import userModel from "../model/user.model";
@@ -6,20 +6,24 @@ import {sendOtp} from "../helper/sendOTP";
 import {verifyOtp, verifyUser} from "../middleware/verifyOtp";
 import {addToBlacklist} from "../utils/blacklist";
 import bcrypt from "bcrypt";
-import passport from "../config/passport.config";
-import {UserSchemaType} from '../interfaces/userSchema.type'
+import passport, {authenticateAndRedirect} from "../config/passport.config";
 
 const router = express.Router();
 
-router.post('/register', async (req, res) => {
+router.post('/register', async (req: Request, res: Response) => {
     try {
         const { userName, email, password } = req.body;
-        const user = await userModel.findOne({ name: userName });
 
-        if (user) {
+        const [findByName, findByEmail] = await Promise.all([
+            await userModel.findOne({ name: userName }),
+            await userModel.findOne({ 'emails.value': email })
+        ])
+
+        if (findByName || findByEmail) {
+            console.log()
             return res.status(400).json({
                 success: false,
-                message: 'userName already exists',
+                message: `${ findByName ? 'userName' : 'email' } already exists`,
             });
         }
 
@@ -31,11 +35,11 @@ router.post('/register', async (req, res) => {
                 message: 'email are not valid'
             });
         }
-        const newToken = createJWT(<UserPayload>{userName, email, password, otp: mail.otp});
+        const accessToken = createJWT(<UserPayload>{userName, email, password, otp: mail.otp});
 
         return res.status(200).json({
             success: true,
-            token: newToken,
+            accessToken,
             message: 'created authorization token successfully.',
         });
 
@@ -47,11 +51,10 @@ router.post('/register', async (req, res) => {
     }
 });
 
-router.post('/send-otp', verifyUser, async (req, res) => {
+router.post('/send-otp', verifyUser, async (req: Request, res: Response) => {
     try {
-        // @ts-ignore
-        const { userName, email, password } = req.user;
-        const mail =  await sendOtp(userName, email);
+        const { userName, email, password } = req.user as UserPayload;
+        const mail =  await sendOtp(userName, email!);
         if (mail.error) {
             return res.status(500).json({
                 success: false,
@@ -59,13 +62,13 @@ router.post('/send-otp', verifyUser, async (req, res) => {
             });
         }
 
-        const newToken = createJWT(<UserPayload>{userName, email, password, otp: mail.otp});
+        const accessToken = createJWT(<UserPayload>{userName, email, password, otp: mail.otp});
         const {token} = req.headers;
         if (token) addToBlacklist(token);
 
         return res.status(200).json({
             success: true,
-            token: newToken,
+            accessToken,
             message: 'otp send successfully.',
         });
 
@@ -78,7 +81,7 @@ router.post('/send-otp', verifyUser, async (req, res) => {
     }
 });
 
-router.post('/verify-otp', verifyOtp, async (req, res) => {
+router.post('/verify-otp', verifyOtp, async (req: Request, res: Response) => {
     try {
         const user = req.user as UserPayload;
 
@@ -92,11 +95,14 @@ router.post('/verify-otp', verifyOtp, async (req, res) => {
         await newUser.save();
         const token = createJwtFromUser(<UserPayload>{userId: newUser._id, userName, email});
 
+        const getUser = await userModel.findById(newUser._id).select(
+            'name active dateOfBirth emails profileImage socialLink post reel friends friendRequest friendRequestSend chat notification createdAt')
+
         return res.status(200).json({
             success: true,
             token: token,
-            message: 'verify otp verification token',
-            user: newUser
+            message: 'otp verified successfully.',
+            user: getUser
         });
     } catch (error) {
         console.log(error)
@@ -107,10 +113,10 @@ router.post('/verify-otp', verifyOtp, async (req, res) => {
     }
 });
 
-router.post('/login', async (req, res) => {
+router.post('/login', async (req: Request, res: Response) => {
     try {
         const {email, password} = req.body;
-
+        console.log(email, password);
         if (!email || !password) {
             return res.status(401).json({
                 success: false,
@@ -154,80 +160,12 @@ router.post('/login', async (req, res) => {
 });
 
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
-
-router.get('/google/callback', (req, res, next) => {
-    passport.authenticate('google', (err: any, user: Express.User, info: any) => {
-        if (err) {
-            // Handle the error and redirect
-            return res.redirect('http://localhost:3000/login?invalid=true');
-        }
-        if (!user) {
-            // No user found, handle accordingly
-            return res.redirect('http://localhost:3000/login?invalid=true');
-        }
-
-        req.logIn(user, (err) => {
-            if (err) {
-                // Handle login error
-                return res.redirect('http://localhost:3000/login?invalid=true');
-            }
-
-            const {_id, name} = user as UserSchemaType;
-            const token = createJwtFromUser(<UserPayload>{userId: _id, userName: name});
-            return res.redirect(`http://localhost:3000/profile?token=${token}`);
-        });
-    })(req, res, next);
-});
+router.get('/google/callback', authenticateAndRedirect('google'));
 
 router.get('/github', passport.authenticate('github', { scope: ['user:email'] }));
+router.get('/github/callback', authenticateAndRedirect('github'));
 
-router.get('/github/callback', (req, res, next) => {
-    passport.authenticate('github', (err: any, user: Express.User, info: any) => {
-        if (err) {
-            // Handle the error and redirect
-            return res.redirect('http://localhost:3000/login?invalid=true');
-        }
-        if (!user) {
-            // No user found, handle accordingly
-            return res.redirect('http://localhost:3000/login?invalid=true');
-        }
-
-        req.logIn(user, (err) => {
-            if (err) {
-                // Handle login error
-                return res.redirect('http://localhost:3000/login?invalid=true');
-            }
-
-            const {_id, name} = user as UserSchemaType;
-            const token = createJwtFromUser(<UserPayload>{userId: _id, userName: name});
-            return res.redirect(`http://localhost:3000/profile?token=${token}`);
-        });
-    })(req, res, next);
-});
 router.get('/facebook', passport.authenticate('facebook', { scope: ['email'] }));
-
-router.get('/facebook/callback', (req, res, next) => {
-    passport.authenticate('facebook', (err: any, user: Express.User, info: any) => {
-        if (err) {
-            // Handle the error and redirect
-            return res.redirect('http://localhost:3000/login?invalid=true');
-        }
-        if (!user) {
-            // No user found, handle accordingly
-            return res.redirect('http://localhost:3000/login?invalid=true');
-        }
-
-        req.logIn(user, (err) => {
-            if (err) {
-                // Handle login error
-                return res.redirect('http://localhost:3000/login?invalid=true');
-            }
-
-            const {_id, name} = user as UserSchemaType;
-            const token = createJwtFromUser(<UserPayload>{userId: _id, userName: name});
-            return res.redirect(`http://localhost:3000/profile?token=${token}`);
-        });
-    })(req, res, next);
-});
+router.get('/facebook/callback', authenticateAndRedirect('facebook',));
 
 export default router;
