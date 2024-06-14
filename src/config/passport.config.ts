@@ -6,7 +6,7 @@ import { Strategy as GitHubStrategy} from 'passport-github2';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { StrategyVerify } from '../middleware/AuthenticationCallback';
 import {NextFunction, Request, Response} from "express";
-import {createJwtFromUser} from "../helper/jsonwebtoken";
+import {createFrommUserVerification, createJwtFromUser} from "../helper/jsonwebtoken";
 import {UserPayload} from "../@types/types";
 
 passport.use(<passport.Strategy>new GoogleStrategy({
@@ -77,16 +77,16 @@ export const authenticateAndRedirect = (strategy: string) => {
     return (req: Request, res: Response, next: NextFunction) => {
         passport.authenticate(strategy, (err: any, user: Express.User, info: any) => {
             if (err || !user) {
-                return res.redirect("http://localhost:3000/login?invalid=true");
+                return res.redirect("http://localhost:3000/sign-up?invalid=true");
             }
             req.logIn(user, (err) => {
                 if (err) {
-                    return res.redirect("http://localhost:3000/login?invalid=true");
+                    return res.redirect("http://localhost:3000/sign-up?invalid=true");
                 }
 
                 const { _id, name } = user as UserSchemaType;
-                const token = createJwtFromUser(<UserPayload>{ userId: _id, userName: name });
-                return res.redirect(`http://localhost:3000/profile?token=${token}`);
+                const token = createFrommUserVerification(<UserPayload>{ userId: _id, userName: name });
+                return res.redirect(`http://localhost:3000/verify?token=${token}`);
             });
         })(req, res, next);
     };

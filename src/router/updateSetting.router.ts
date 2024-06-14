@@ -21,7 +21,7 @@ router.post('/email-otp', Auth.Authentication, async (req, res) => {
 
         const mail =  await sendOtp(user.name, email);
         if (mail.error || !mail.otp) {
-            return res.status(500).json({
+            return res.status(401).json({
                 success: false,
                 message: 'email are not valid'
             });

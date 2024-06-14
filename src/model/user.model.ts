@@ -32,6 +32,7 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     name: { type: String, required: true },
     active: { type: Boolean, default: true },
     nameUpdateTime: { type: Date, required: true, default: Date.now },
+    role: { type: String, required: false },
     dateOfBirth: { type: DateOfBirthSchema, default: {} },
     notificationToken: { type: String, required: false, default: null },
     emails: [ { value: { type: String, required: true }} ],

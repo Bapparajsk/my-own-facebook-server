@@ -3,7 +3,7 @@ import { Request } from 'express';
 import {UserSchemaType} from "../interfaces/userSchema.type";
 
 interface UserPayload {
-    userId?: string
+    userId?: string | unknown
     userName: string;
     email?: string;
     password?: string;

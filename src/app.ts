@@ -11,6 +11,7 @@ import AuthRouter from "./router/auth.router";
 import AddRouter from './router/updateSetting.router';
 import PostRouter from './router/post.router';
 import { router } from './router/friend.router';
+import UserRouter from "./router/user.router";
 
 const app: Express = express();
 
@@ -35,6 +36,7 @@ app.use(passport.session());
 
 // route paths
 app.use('/auth', AuthRouter);
+app.use('/api/user', UserRouter);
 app.use('/api/add', AddRouter);
 app.use('/api/post', PostRouter);
 app.use('/api/friend', router);

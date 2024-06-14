@@ -38,6 +38,7 @@ export interface UserSchemaType extends Document {
     name: string
     active: boolean
     nameUpdateTime: Date,
+    role: string,
     dateOfBirth: DateOfBirthType,
     notificationToken: string,
     emails: { value: string }[]
