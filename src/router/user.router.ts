@@ -20,7 +20,9 @@ const getUser = (user: UserSchemaType) => {
         friendRequest,
         friendRequestSend,
         chat,
-        notification
+        notification,
+        like,
+        role,
     } = user;
 
     return {
@@ -35,7 +37,9 @@ const getUser = (user: UserSchemaType) => {
         friendRequest,
         friendRequestSend,
         chat,
-        notification
+        notification,
+        like,
+        role,
     };
 }
 

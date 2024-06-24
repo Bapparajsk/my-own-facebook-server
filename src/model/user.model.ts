@@ -1,19 +1,19 @@
 import {model, Schema} from "mongoose";
-import { UserSchemaType, OtpSchema, DateOfBirthType, NotificationType } from '../interfaces/userSchema.type'
+import {UserSchemaType, OtpSchema, DateOfBirthType, NotificationType, FriendsType} from '../interfaces/userSchema.type'
 import bcrypt from "bcrypt";
 
-const OtpSchema = new Schema<OtpSchema>({
+const OtpSchema: Schema<OtpSchema> = new Schema<OtpSchema>({
     otp: { type: String, default: null },
     value: { type: String, default: null }
 });
 
-const DateOfBirthSchema = new Schema<DateOfBirthType>({
+const DateOfBirthSchema: Schema<DateOfBirthType> = new Schema<DateOfBirthType>({
     day: { type: Number, required: false },
     month: { type: Number, required: false },
     year: { type: Number, required: false }
 });
 
-const NotificationSchema = new Schema<NotificationType>({
+const NotificationSchema: Schema<NotificationType> = new Schema<NotificationType>({
     userId: { type: String, required: true },
     name: { type: String, required: true },
     image: { type: String || undefined },
@@ -22,7 +22,7 @@ const NotificationSchema = new Schema<NotificationType>({
     Type: { type: String, required: true },
 });
 
-const FriendSchema = new Schema({
+const FriendSchema: Schema<FriendsType> = new Schema({
     userId: { type: String, required: true },
     name: { type: String, required: true },
     image: { type: String || undefined }
@@ -62,6 +62,7 @@ const userSchema: Schema<UserSchemaType> = new Schema({
         profileImage: { type: String, required: false },
     }],
     notification: [{ type: NotificationSchema, default: null }],
+    like: { type: Map, default: {}},
     createdAt: { type: Date, default: Date.now },
 });
 

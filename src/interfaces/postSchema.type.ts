@@ -1,23 +1,26 @@
 import { Document } from 'mongoose'
 
 export interface  CommentType {
+    id: string,
     userId: string,
     userName: string,
     userImage: string,
     createdAt: Date
+    modify: Date
     comment: string
 }
 
 export interface PostSchemaType extends Document {
-    userId: unknown
+    userId: string
     name: string
     imageUrl: string | undefined
     createdAt: Date
-    description: any
+    modify: Date
+    description: string
     contentUrl: string
     contentType: string
     likeCount: number
     commentCount: number
     shareCount: number
-    comments: CommentType[]
+    comments: Map<string, CommentType>
 }

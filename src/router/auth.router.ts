@@ -20,7 +20,6 @@ router.post('/register', async (req: Request, res: Response) => {
         ])
 
         if (findByName || findByEmail) {
-            console.log()
             return res.status(400).json({
                 success: false,
                 message: `${ findByName ? 'userName' : 'email' } already exists`,
@@ -96,7 +95,7 @@ router.post('/verify-otp', verifyOtp, async (req: Request, res: Response) => {
         const token = createJwtFromUser(<UserPayload>{userId: newUser._id, userName, email});
 
         const getUser = await userModel.findById(newUser._id).select(
-            'name active dateOfBirth emails profileImage socialLink post reel friends friendRequest friendRequestSend chat notification createdAt')
+            'name active dateOfBirth emails profileImage socialLink post reel friends friendRequest friendRequestSend chat notification createdAt, role')
 
         return res.status(200).json({
             success: true,
@@ -116,7 +115,6 @@ router.post('/verify-otp', verifyOtp, async (req: Request, res: Response) => {
 router.post('/login', async (req: Request, res: Response) => {
     try {
         const {email, password} = req.body;
-        console.log(email, password);
         if (!email || !password) {
             return res.status(401).json({
                 success: false,

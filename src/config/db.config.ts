@@ -1,8 +1,8 @@
-import mongoose = require('mongoose');
+import mongoose from 'mongoose';
 
 const init = async () => {
     try {
-        await mongoose.connect('mongodb://localhost:27017/testuser');
+        await mongoose.connect(process.env.MONGODB_URL!);
         console.log(`mongoDB connection successful 🚀🚀🚀`)
     } catch (error) {
         console.log(`mongoDB connection error 🚨🚨🚨`)

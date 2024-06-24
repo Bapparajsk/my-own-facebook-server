@@ -56,12 +56,13 @@ export interface UserSchemaType extends Document {
         email?: OtpSchema | null
         phoneNumber?: OtpSchema | null
     },
-    post: { postId: unknown }[]
+    post: { postId: string }[]
     reel: { reelId: string }[]
     friends: Map<unknown, FriendsType>
     friendRequest: Map<unknown, FriendsType>
     friendRequestSend: Map<unknown, FriendsType>
     chat: ChatType[]
     notification: NotificationType[]
+    like: Set<string>
     createdAt: Date
 }
