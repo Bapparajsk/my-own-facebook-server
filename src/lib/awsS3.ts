@@ -1,5 +1,5 @@
 import s3 from '../config/s3.config';
-import {GetObjectCommand, PutObjectCommand} from '@aws-sdk/client-s3';
+import { GetObjectCommand, PutObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 export const getObjectURL = async (key: string) : Promise<string> => {
@@ -19,4 +19,26 @@ export const putObjectURL = async (fileName: string, contentType: string): Promi
     });
 
     return await getSignedUrl(s3, command, { expiresIn: 10 * 60 });  // 3 minutes after expire this url
+}
+
+export const deleteObjectURL = async (key: string) : Promise<void> => {
+
+    const Bucket = process.env.AWS_BUCKET;
+
+    if (Bucket === undefined) {
+        throw new Error("Bucket is not defined in .env file");
+    }
+
+    const command = new DeleteObjectCommand({
+        Bucket: Bucket,
+        Key: key
+    });
+
+    try {
+        await s3.send(command);
+        console.log(`Successfully deleted object with key ${key}`);
+    } catch (error) {
+        console.error(`Failed to delete object with key ${key}`, error);
+        throw new Error(`Failed to delete object with key ${key}`);
+    }
 }

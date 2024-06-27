@@ -143,4 +143,22 @@ router.get("/verify_successful", Auth.Authentication, async (req: Request, res: 
     }
 });
 
+router.get("/get_all_post", Auth.Authentication, async (req: Request, res: Response) => {
+    try {
+        const user = req.User as UserSchemaType;
+
+        return res.status(200).json({
+            success: true,
+            message: 'Successfully get all post',
+            post: user.post
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: 'internal server error'
+        })
+    }
+});
+
 export default router;
