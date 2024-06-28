@@ -4,7 +4,7 @@ import { UserSchemaType } from "../interfaces/userSchema.type";
 import { v4 as uuidv4 } from "uuid";
 
 const set: Set<string> = new Set<string>(
-    ["like", "dislike", "comment","modify-comment", "delete-comment" ,"share", "description"]);
+    ["like", "dislike", "comment", "modify-comment", "delete-comment" ,"share", "description"]);
 
 const like = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean, string] => {
     if (user.like.has(post._id as string)) {
