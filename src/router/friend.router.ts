@@ -3,6 +3,7 @@ import Auth from '../middleware/auth';
 import UserModel from "../model/user.model";
 import {FriendsType, NotificationType, UserSchemaType} from "../interfaces/userSchema.type";
 import {addTaskInQueueFromFriendNotification} from "../lib/bullmqProducer";
+import { getObjectURL } from '../lib/awsS3';
 
 const router = express.Router();
 
@@ -159,6 +160,71 @@ router.patch('/reject-request', Auth.Authentication, async (req: express.Request
     }
 });
 
+router.get('/get-all', Auth.Authentication, async (req: express.Request, res: express.Response) => {
+    try {
+        const user = req.User as UserSchemaType;
+        const env = req.query.env as string | undefined;
+        const limit = parseInt(req.query.limit as string, 10) || 10;
+        const page = parseInt(req.query.page as string, 10) || 1;
+
+        if (!['send-request', 'friends', 'request', undefined].includes(env)) {
+            return res.status(400).json({ success: false, message: 'Invalid query parameter' });
+        }
+
+        let friendsQuery: any = {};
+
+        switch (env) {
+            case 'send-request':
+            case undefined:
+                friendsQuery = {
+                    _id: { 
+                        $nin: [
+                            ...Array.from(user.friends.keys()),
+                            ...Array.from(user.friendRequest.keys()),
+                            ...Array.from(user.friendRequestSend.keys()),
+                            user._id
+                        ]
+                    }
+                };
+                break;
+
+            case 'friends':
+                friendsQuery = { _id: { $in: Array.from(user.friends.keys()) } };
+                break;
+
+            case 'request':
+                friendsQuery = { _id: { $in: Array.from(user.friendRequest.keys()) } };
+                break;
+        }
+
+        let friends = await UserModel.find(friendsQuery)
+            .select('_id name role profileImage')
+            .skip((page - 1) * limit)
+            .limit(limit);
+
+        friends = await Promise.all(friends.map(async (friend: any) => {
+            if (friend.profileImage?.profileImageURL && !friend.profileImage.profileImageURL.startsWith('http')) {
+                friend.profileImage.profileImageURL = await getObjectURL(friend.profileImage.profileImageURL);
+            }
+            return friend;
+        }));
+        
+
+        return res.status(200).json({
+            success: true,
+            message: 'Successfully getting all friends',
+            friends
+        });
+
+    } catch (error) {
+        console.log(error)
+        res.status(400).send({
+            success: false,
+            message: 'Something went wrong',
+        });
+    }
+});
+
 router.get('/get', Auth.Authentication, async (req: express.Request, res: express.Response) => {
     try {
         const friendId = req.body.friendId as string;
@@ -170,7 +236,7 @@ router.get('/get', Auth.Authentication, async (req: express.Request, res: expres
             return res.status(404).send({
                 success: false,
                 message: 'friend not found',
-            })
+            });
         }
 
         return res.status(200).json({

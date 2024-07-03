@@ -9,6 +9,7 @@ import { PostSchemaType } from "../interfaces/postSchema.type";
 import Post from "../model/post.model";
 import {updatePost} from "../utils/valediction";
 import postValediction from "../lib/postValediction";
+import UserModel from "../model/user.model";
 
 const router = express.Router();
 
@@ -26,22 +27,30 @@ router.get('/', Auth.Authentication, async (req: express.Request, res: express.R
         const [newPostInDb, totalDocuments] = await Promise.all([
             PostModel.find()
                 .sort({ createdAt: -1 })
-                .skip(page * 10)
-                .limit(10),
+                .skip(page * 1)
+                .limit(1),
             PostModel.countDocuments()
         ]);
-
-        const hasNext = totalDocuments > ((page + 1) * 10);
-
+        const hasNext = totalDocuments > ((page + 1) * 1);
         let responseData = [...cachedData, ...newPostInDb];
 
-        responseData = responseData.map(async (post) => ({...post, contentUrl: await getObjectURL(post.contentUrl)}))
+        
+        for (let i = 0; i < responseData.length; i++) {
+            responseData[i].contentUrl = await getObjectURL(responseData[i].contentUrl);
+            const user = await UserModel.findById(responseData[i].userId).select("active");
+            responseData[i].userActive = user?.active || false;
+        }
 
+        console.log(hasNext);
+        
+        
         return res.status(200).json({
             success: true,
             data: responseData,
-            hasNext
+            hasNext,
+            page : hasNext ? page + 1 : 0,
         });
+        
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -142,6 +151,43 @@ router.post('/add-post', Auth.Authentication, async (req, res) => {
     }
 });
 
+router.delete("/delete", Auth.Authentication, async (req: express.Request, res: express.Response) => {
+    try {
+        const id = req.query.id as string;
+        const user = req.User as UserSchemaType;
+
+        if (!id) {
+            return res.status(404).json({
+                success: false,
+                message: "id is not found"
+            })
+        }
+
+        const post = await PostModel.findById(id) as PostSchemaType | undefined;
+
+        if (!post) {
+            return res.status(404).json({
+                success: false,
+                message: "post not found"
+            })
+        }
+
+        user.post = user.post.filter(post => post.postId !== id);
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'post delete successfully'
+        })
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'internal server error'
+        })
+    }
+})
 
 router.patch("/update", Auth.Authentication, async (req: express.Request, res: express.Response) => {
     try {

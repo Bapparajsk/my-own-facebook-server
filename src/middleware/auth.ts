@@ -28,7 +28,7 @@ const Authentication = async (req: Request, res: Response, next: NextFunction) =
     try {
         req.User = await authenticateToken(token);
         next();
-    } catch (error) {
+    } catch (error) {        
         return res.status(401).json({ error: 'Invalid token' });
     }
 }
@@ -56,6 +56,8 @@ const verifyOtpFromEmail = async (req: Request, res: Response, next: NextFunctio
         req.User = user;
         next();
     } catch (error) {
+        console.log(error);
+        
         return res.status(401).send({
             success: false,
             message: 'internal server error'
