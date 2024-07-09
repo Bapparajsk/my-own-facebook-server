@@ -4,7 +4,8 @@ import { addTaskInQueueFromNewChatNotification } from '../lib/bullmqProducer';
 import { ChatModel } from "../model/chat.model";
 import userHashId from "../lib/userHashId";
 import UserModel from "../model/user.model";
-import {UserSchemaType} from "../interfaces/userSchema.type";
+import {INode, ListNode, UserSchemaType} from "../interfaces/userSchema.type";
+import { sendMeassage } from '../lib/io';
 
 
 export function handleConnection(socket: Socket) {
@@ -49,8 +50,8 @@ export function handleConnection(socket: Socket) {
 
             // Fetch user and friend data concurrently
             const [userData, friendData] = await Promise.all([
-                UserModel.findById(userId).select('_id name profileImage chat'),
-                UserModel.findById(friendId).select('_id name profileImage chat notificationToken')
+                UserModel.findById(userId),
+                UserModel.findById(friendId)
             ]);
 
             if (!userData || !friendData) throw new Error('User or friend not found');
@@ -62,32 +63,15 @@ export function handleConnection(socket: Socket) {
                 { new: true, upsert: true }
             );
 
-            // Check if chat is newly created
-            const isNewChat = chat.chat.length === 0;
+            let nodewithMe = userData.get(`chat.linkedList.${hashingId}`) as INode;
+            let nodewithFriend = friendData.get(`chat.linkedList.${hashingId}`) as INode;
+            sendMeassage(userData, friendData, nodewithMe, chat._id as string, message, hashingId, true);
+            sendMeassage(friendData, userData, nodewithFriend, chat._id as string, message, hashingId, false);
 
-            if (isNewChat) {
-                // Add chat references to both users
-                userData.chat.push({
-                    chatId: chat._id,
-                    userId: friendData._id,
-                    name: friendData.name,
-                    profileImage: friendData.profileImage.profileImageURL
-                });
+            chat.chat.push({ name: userData.name, message, time: new Date() });
 
-                friendData.chat.push({
-                    chatId: chat._id,
-                    userId: userData._id,
-                    name: userData.name,
-                    profileImage: userData.profileImage.profileImageURL
-                });
-
-                // Save user data concurrently
-                await Promise.all([userData.save(), friendData.save()]);
-            }
-
-            // Add message to chat
-            chat.chat.push({ name: friendData.name, message });
-            await chat.save();
+            await userData.save();
+            await friendData.save();
 
             // Get friend's socket ID
             const friendSocketID = Map.userListByUserId.get(friendId);

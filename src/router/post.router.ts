@@ -27,11 +27,11 @@ router.get('/', Auth.Authentication, async (req: express.Request, res: express.R
         const [newPostInDb, totalDocuments] = await Promise.all([
             PostModel.find()
                 .sort({ createdAt: -1 })
-                .skip(page * 1)
+                .skip(page * 10)
                 .limit(1),
             PostModel.countDocuments()
         ]);
-        const hasNext = totalDocuments > ((page + 1) * 1);
+        const hasNext = totalDocuments > ((page + 10) * 10);
         let responseData = [...cachedData, ...newPostInDb];
 
         
@@ -41,9 +41,6 @@ router.get('/', Auth.Authentication, async (req: express.Request, res: express.R
             responseData[i].userActive = user?.active || false;
         }
 
-        console.log(hasNext);
-        
-        
         return res.status(200).json({
             success: true,
             data: responseData,

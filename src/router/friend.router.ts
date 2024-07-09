@@ -166,6 +166,7 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
         const env = req.query.env as string | undefined;
         const limit = parseInt(req.query.limit as string, 10) || 10;
         const page = parseInt(req.query.page as string, 10) || 1;
+        const isAll = req.query.all as string | undefined;
 
         if (!['send-request', 'friends', 'request', undefined].includes(env)) {
             return res.status(400).json({ success: false, message: 'Invalid query parameter' });
@@ -197,19 +198,26 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
                 break;
         }
 
-        let friends = await UserModel.find(friendsQuery)
-            .select('_id name role profileImage')
+        let friends: any = [];
+
+        if (isAll === "true") {
+            friends = await UserModel.find(friendsQuery)
+            .select('_id name role profileImage active')
+        }
+        else {
+            friends = await UserModel.find(friendsQuery)
+            .select('_id name role profileImage active')
             .skip((page - 1) * limit)
             .limit(limit);
 
-        friends = await Promise.all(friends.map(async (friend: any) => {
-            if (friend.profileImage?.profileImageURL && !friend.profileImage.profileImageURL.startsWith('http')) {
-                friend.profileImage.profileImageURL = await getObjectURL(friend.profileImage.profileImageURL);
-            }
-            return friend;
-        }));
-        
+        }
 
+        for(let i = 0; i < friends.length; i++) {
+            if (friends[i].profileImage?.profileImageURL && !friends[i].profileImage.profileImageURL.startsWith('http')) {
+                friends[i].profileImage.profileImageURL = await getObjectURL(friends[i].profileImage.profileImageURL);
+            }
+        }
+    
         return res.status(200).json({
             success: true,
             message: 'Successfully getting all friends',

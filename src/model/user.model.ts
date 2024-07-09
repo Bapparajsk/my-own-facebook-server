@@ -1,5 +1,12 @@
 import {model, Schema} from "mongoose";
-import {UserSchemaType, OtpSchema, DateOfBirthType, NotificationType, FriendsType} from '../interfaces/userSchema.type'
+import {
+    UserSchemaType,
+    OtpSchema,
+    DateOfBirthType,
+    NotificationType,
+    FriendsType,
+    INode
+} from '../interfaces/userSchema.type'
 import bcrypt from "bcrypt";
 
 const OtpSchema: Schema<OtpSchema> = new Schema<OtpSchema>({
@@ -26,6 +33,20 @@ const FriendSchema: Schema<FriendsType> = new Schema({
     userId: { type: String, required: true },
     name: { type: String, required: true },
     image: { type: String || undefined }
+});
+
+const chatSchema: Schema<INode> = new Schema({
+    uid: { type: String, required: true },
+    value: {
+        name: { type: String, required: true },
+        imgUrl: { type: String || undefined || null, required: true },
+        lastMessage: { type: String, required: true },
+        lastMessageTime: { type: Date, required: true },
+        chatId: { type: String, required: true },
+        isMe: { type: Boolean, required: true },
+    },
+    next: { type: String, default: null },
+    prev: { type: String, default: null }
 });
 
 const userSchema: Schema<UserSchemaType> = new Schema({
@@ -55,12 +76,18 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     friends: { type: Map, of: FriendSchema, default: {} },
     friendRequest: { type: Map, of: FriendSchema, default: {} },
     friendRequestSend: { type: Map, of: FriendSchema, default: {} },
-    chat: [{
-        chatId: { type: String, ref: 'Chat', required: true },
-        userId: { type: String, ref: 'Friend', required: true },
-        name: { type: String, required: true },
-        profileImage: { type: String, required: false },
-    }],
+    chat: {
+        head: {
+            type: String || null,
+            ref: 'Node',
+            default: null,
+        },
+        linkedList: {
+            type: Map,
+            of: chatSchema,
+            default: {}
+        }
+    },
     notification: [{ type: NotificationSchema, default: null }],
     like: { type: Map, default: {}},
     createdAt: { type: Date, default: Date.now },

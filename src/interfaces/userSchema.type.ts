@@ -1,15 +1,29 @@
-import { Document } from 'mongoose'
+import mongoose, { Document } from 'mongoose'
+
+export interface ListNode {
+    name: string;
+    imgUrl: string | undefined | null;
+    lastMessage: string;
+    lastMessageTime: Date;
+    chatId: string;
+    isMe: boolean;
+}
+
+export interface INode {
+    uid: string;
+    value: ListNode;
+    next: string | null;
+    prev: string | null;
+}
+
+export interface resentChatType {
+    head: string | null;
+    linkedList: {[key: string]: INode};
+}
 
 export interface OtpSchema {
     otp: string | null;
     value: string | null;
-}
-
-export interface ChatType {
-    chatId: unknown
-    userId: unknown
-    name: string
-    profileImage: string | undefined
 }
 
 export interface DateOfBirthType {
@@ -61,7 +75,7 @@ export interface UserSchemaType extends Document {
     friends: Map<unknown, FriendsType>
     friendRequest: Map<unknown, FriendsType>
     friendRequestSend: Map<unknown, FriendsType>
-    chat: ChatType[]
+    chat: resentChatType
     notification: NotificationType[]
     like: Set<string>
     createdAt: Date
