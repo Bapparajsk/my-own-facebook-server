@@ -9,6 +9,7 @@ const router = Router();
 
 const getUser = (user: UserSchemaType) => {
     const {
+        _id,
         name,
         active,
         dateOfBirth,
@@ -26,6 +27,7 @@ const getUser = (user: UserSchemaType) => {
     } = user;
 
     return {
+        _id,
         name,
         active,
         dateOfBirth,

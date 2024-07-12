@@ -5,7 +5,9 @@ import {
     DateOfBirthType,
     NotificationType,
     FriendsType,
-    INode
+    INode,
+    ListNode,
+    resentChatType
 } from '../interfaces/userSchema.type'
 import bcrypt from "bcrypt";
 
@@ -35,18 +37,25 @@ const FriendSchema: Schema<FriendsType> = new Schema({
     image: { type: String || undefined }
 });
 
-const chatSchema: Schema<INode> = new Schema({
+const listNodeSchema = new Schema<ListNode>({
+    name: { type: String, required: true },
+    imgUrl: { type: String, default: null },
+    lastMessage: { type: String, required: true },
+    lastMessageTime: { type: Date, required: true },
+    chatId: { type: String, required: true },
+    isMe: { type: Boolean, required: true }
+});
+  
+const iNodeSchema = new Schema<INode>({
     uid: { type: String, required: true },
-    value: {
-        name: { type: String, required: true },
-        imgUrl: { type: String || undefined || null, required: true },
-        lastMessage: { type: String, required: true },
-        lastMessageTime: { type: Date, required: true },
-        chatId: { type: String, required: true },
-        isMe: { type: Boolean, required: true },
-    },
+    value: { type: listNodeSchema, required: true },
     next: { type: String, default: null },
     prev: { type: String, default: null }
+});
+  
+const chatSchema = new Schema<resentChatType>({
+    head: { type: String, default: null },
+    linkedList: { type: Map, of: iNodeSchema, default: {} }
 });
 
 const userSchema: Schema<UserSchemaType> = new Schema({
@@ -76,18 +85,7 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     friends: { type: Map, of: FriendSchema, default: {} },
     friendRequest: { type: Map, of: FriendSchema, default: {} },
     friendRequestSend: { type: Map, of: FriendSchema, default: {} },
-    chat: {
-        head: {
-            type: String || null,
-            ref: 'Node',
-            default: null,
-        },
-        linkedList: {
-            type: Map,
-            of: chatSchema,
-            default: {}
-        }
-    },
+    chat: { type: chatSchema, required: true },
     notification: [{ type: NotificationSchema, default: null }],
     like: { type: Map, default: {}},
     createdAt: { type: Date, default: Date.now },

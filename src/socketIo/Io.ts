@@ -12,14 +12,23 @@ export function handleConnection(socket: Socket) {
     socket.on('newUser', async (userId: string) => {
         Map.userListBySocketId.set(socket.id, userId);
         Map.userListByUserId.set(userId, socket.id);
-
+        console.log("new user", userId);
+        
         try {
+            console.log(1);
+            
             const user = await UserModel.findById(userId) as UserSchemaType;
+            console.log(2);
             if (!user) return;
+            console.log(3);
             user.active = true;
+            console.log(4);
             await user.save();
+
+            console.log("user connect", userId);
+
         } catch (error) {
-            console.log(error);
+            console.log("error", error);
         }
     });
 

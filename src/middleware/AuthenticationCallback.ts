@@ -18,6 +18,8 @@ export const StrategyVerify = async (accessToken: any, refreshToken: any, profil
         const userDetails: Partial<UserSchemaType> = {
             name: displayName,
             socialLink: { githubId: id },
+            chat: { head: null, linkedList: {} },
+            notification: [],
         };
 
         if (photos && photos.length > 0 && photos[0].value) {

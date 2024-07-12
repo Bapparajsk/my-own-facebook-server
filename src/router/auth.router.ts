@@ -88,7 +88,8 @@ router.post('/verify-otp', verifyOtp, async (req: Request, res: Response) => {
         const userDetails = {
             name: userName,
             emails: [{value: email}],
-            password: password
+            password: password,
+            chat: {head: null, linkedList: {}},
         }
         const newUser = new userModel(userDetails);
         await newUser.save();
