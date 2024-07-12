@@ -30,7 +30,10 @@ passport.use(<passport.Strategy>new GoogleStrategy({
 
             const userDetails: Partial<UserSchemaType> = {
                 name: displayName,
+                active: true,
+                nameUpdateTime: new Date(),
                 socialLink: { googleId: id },
+                chat: { head: null, linkedList: {} },
             };
 
             if (photos && photos.length > 0 && photos[0].value) {
