@@ -69,3 +69,38 @@ const worker2 = new Worker('friendNotificationQueue', async job => {
 worker2.on('failed', (job, err) => {
     console.error(`Job failed with id ${job?.id}`, err);
 });
+
+const worker3 = new Worker('newPostNotificationQueue', async job => {
+    const {
+        name,
+        image,
+        description,
+        createdAt,
+        token,
+        Type
+    } = job.data as NotificationType;
+
+    console.log('notification queue');
+
+    const message = {
+        notification: {
+            title: "New Notification",
+            body: description, // Use a suitable property for the body
+        },
+        data: {
+            name,
+            image: image || "",
+            description,
+            createdAt: createdAt.toString(),
+            Type
+        },
+        token: token!
+    };
+
+    const ss =  await messaging.send(message);
+    console.log(" notifiction send ", ss)
+}, workerOptions);
+
+worker3.on('failed', (job, err) => {
+    console.error(`Job failed with id ${job?.id}`, err);
+});

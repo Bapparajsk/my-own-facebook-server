@@ -29,13 +29,13 @@ router.put('/send-request', Auth.Authentication , async (req: express.Request, r
         }
 
         UserData.friendRequestSend.set(FriendData._id as string, {
-            userId: FriendData._id,
+            userId: FriendData._id as string,
             name: FriendData.name,
             image: FriendData.profileImage.profileImageURL || undefined
         });
 
         FriendData.friendRequest.set(UserData._id as string, {
-            userId: UserData._id,
+            userId: UserData._id as string,
             name: UserData.name,
             image: UserData.profileImage.profileImageURL || undefined
         });
@@ -72,13 +72,13 @@ router.patch('/accept-request', Auth.Authentication, async (req: express.Request
         }
 
         user.friends.set(friendId, {
-            userId: friendData._id,
+            userId: friendData._id as string,
             name: friendData.name,
             image: friendData.profileImage.profileImageURL
         });
 
         friendData.friends.set(user._id as string, {
-            userId: user._id,
+            userId: user._id as string,
             name: user.name,
             image: user.profileImage.profileImageURL
         });
@@ -97,7 +97,7 @@ router.patch('/accept-request', Auth.Authentication, async (req: express.Request
             isvew: false
         }
 
-        await addTaskInQueueFromFriendNotification(notification, friendData.notificationToken, friendData._id);
+        await addTaskInQueueFromFriendNotification(notification, friendData.notificationToken, friendData._id as string);
         friendData.notification.push(notification);
 
         await user.save();
@@ -141,7 +141,7 @@ router.patch('/reject-request', Auth.Authentication, async (req: express.Request
             isvew: false
         }
 
-        await addTaskInQueueFromFriendNotification(notification, friendData.notificationToken, friendData._id);
+        await addTaskInQueueFromFriendNotification(notification, friendData.notificationToken, friendData._id as string);
         friendData.notification.push(notification);
 
         UserData.friendRequest.delete(friendId);

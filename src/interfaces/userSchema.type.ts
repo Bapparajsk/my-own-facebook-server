@@ -44,7 +44,7 @@ export interface NotificationType {
 }
 
 export interface FriendsType {
-    userId: unknown
+    userId: string
     name: string
     image: string | undefined
 }
