@@ -33,12 +33,13 @@ export interface DateOfBirthType {
 }
 
 export interface NotificationType {
-    userId: unknown
+    userId: string
     name: string
     image: string | undefined
     createdAt: Date
     description: string
     Type: string
+    isvew: boolean
     token?: string
 }
 
@@ -72,9 +73,9 @@ export interface UserSchemaType extends Document {
     },
     post: { postId: string }[]
     reel: { reelId: string }[]
-    friends: Map<unknown, FriendsType>
-    friendRequest: Map<unknown, FriendsType>
-    friendRequestSend: Map<unknown, FriendsType>
+    friends: Map<string, FriendsType>
+    friendRequest: Map<string, FriendsType>
+    friendRequestSend: Map<string, FriendsType>
     chat: resentChatType
     notification: NotificationType[]
     like: Set<string>

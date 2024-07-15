@@ -21,20 +21,20 @@ router.put('/send-request', Auth.Authentication , async (req: express.Request, r
         }
 
         if (!UserData.friendRequestSend) {
-            UserData.friendRequestSend = new Map<unknown, FriendsType>();
+            UserData.friendRequestSend = new Map<string, FriendsType>();
         }
 
         if(!FriendData.friendRequest) {
-            FriendData.friendRequest = new Map<unknown, FriendsType>();
+            FriendData.friendRequest = new Map<string, FriendsType>();
         }
 
-        UserData.friendRequestSend.set(FriendData._id, {
+        UserData.friendRequestSend.set(FriendData._id as string, {
             userId: FriendData._id,
             name: FriendData.name,
             image: FriendData.profileImage.profileImageURL || undefined
         });
 
-        FriendData.friendRequest.set(UserData._id, {
+        FriendData.friendRequest.set(UserData._id as string, {
             userId: UserData._id,
             name: UserData.name,
             image: UserData.profileImage.profileImageURL || undefined
@@ -77,7 +77,7 @@ router.patch('/accept-request', Auth.Authentication, async (req: express.Request
             image: friendData.profileImage.profileImageURL
         });
 
-        friendData.friends.set(user._id, {
+        friendData.friends.set(user._id as string, {
             userId: user._id,
             name: user.name,
             image: user.profileImage.profileImageURL
@@ -85,15 +85,16 @@ router.patch('/accept-request', Auth.Authentication, async (req: express.Request
 
         // delete from Request list
         user.friendRequest.delete(friendId);
-        friendData.friendRequestSend.delete(user._id);
+        friendData.friendRequestSend.delete(user._id as string);
 
         const notification: NotificationType = {
-            userId: user._id,
+            userId: user._id as string,
             name: user.name,
             image: user.profileImage.profileImageURL || undefined,
             createdAt: new Date(),
             description: 'accepted your friend request.',
-            Type: 'reject friend request'
+            Type: 'reject friend request',
+            isvew: false
         }
 
         await addTaskInQueueFromFriendNotification(notification, friendData.notificationToken, friendData._id);
@@ -131,19 +132,20 @@ router.patch('/reject-request', Auth.Authentication, async (req: express.Request
         }
 
         const notification: NotificationType = {
-            userId: UserData._id,
+            userId: UserData._id as string,
             name: UserData.name,
             image: UserData.profileImage.profileImageURL || undefined,
             createdAt: new Date(),
             description: 'rejected your friend request.',
-            Type: 'reject friend request'
+            Type: 'reject friend request',
+            isvew: false
         }
 
         await addTaskInQueueFromFriendNotification(notification, friendData.notificationToken, friendData._id);
         friendData.notification.push(notification);
 
         UserData.friendRequest.delete(friendId);
-        friendData.friendRequestSend.delete(UserData._id);
+        friendData.friendRequestSend.delete(UserData._id as string);
 
 
         return res.status(200).json({

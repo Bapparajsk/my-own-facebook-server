@@ -17,11 +17,7 @@ const getUser = (user: UserSchemaType) => {
         profileImage,
         post,
         reel,
-        friends,
-        friendRequest,
-        friendRequestSend,
         chat,
-        notification,
         like,
         role,
     } = user;
@@ -35,11 +31,7 @@ const getUser = (user: UserSchemaType) => {
         profileImage,
         post,
         reel,
-        friends,
-        friendRequest,
-        friendRequestSend,
         chat,
-        notification,
         like,
         role,
     };
@@ -153,6 +145,29 @@ router.get("/get_all_post", Auth.Authentication, async (req: Request, res: Respo
             success: true,
             message: 'Successfully get all post',
             post: user.post
+        });
+    } catch (error) {
+        console.log(error);
+        return res.status(500).send({
+            success: false,
+            message: 'internal server error'
+        })
+    }
+});
+
+router.get("/notification", Auth.Authentication, async (req: Request, res: Response) => {
+    try {
+        const page = parseInt(req.query.page as string) || 0;
+        const limit = parseInt(req.query.limit as string) || 10;
+        const user = req.User as UserSchemaType;
+
+        const notification = user.notification.slice(page * limit, (page + 1) * limit);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Successfully get notification',
+            notification,
+            nextPage: (user.notification.length > (page + 1) * limit)
         });
     } catch (error) {
         console.log(error);

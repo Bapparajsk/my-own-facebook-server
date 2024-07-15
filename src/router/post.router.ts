@@ -6,7 +6,6 @@ import PostModel from "../model/post.model";
 import {UserSchemaType} from "../interfaces/userSchema.type";
 import {setNewItemInRedis, getNewPost } from "../lib/redis";
 import { PostSchemaType } from "../interfaces/postSchema.type";
-import Post from "../model/post.model";
 import {updatePost} from "../utils/valediction";
 import postValediction from "../lib/postValediction";
 import UserModel from "../model/user.model";
@@ -28,7 +27,7 @@ router.get('/', Auth.Authentication, async (req: express.Request, res: express.R
             PostModel.find()
                 .sort({ createdAt: -1 })
                 .skip(page * 10)
-                .limit(1),
+                .limit(10),
             PostModel.countDocuments()
         ]);
         const hasNext = totalDocuments > ((page + 10) * 10);

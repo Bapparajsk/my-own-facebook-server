@@ -29,6 +29,8 @@ const NotificationSchema: Schema<NotificationType> = new Schema<NotificationType
     createdAt: { type: Date, default: Date.now },
     description: { type: String, required: true },
     Type: { type: String, required: true },
+    isvew: { type: Boolean, default: false },
+    token: { type: String, default: null },
 });
 
 const FriendSchema: Schema<FriendsType> = new Schema({
