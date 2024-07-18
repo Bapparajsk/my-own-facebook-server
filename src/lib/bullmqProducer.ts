@@ -41,7 +41,8 @@ export const addTaskInQueueFromFriendNotification = async (notification: Notific
 
 export const addTaskInQueueFromNewPostNotification = async (friends : Map<string, FriendsType>, id: string, name: string, image: string | undefined) => {
     try {
-
+        console.log('addTaskInQueueFromNewPostNotification');
+        
         friends.forEach(async (friend) => {
             const userId = Map.userListByUserId.get(friend.userId);
 
@@ -54,7 +55,7 @@ export const addTaskInQueueFromNewPostNotification = async (friends : Map<string
             }
 
             const f = await UserModel.findById(friend.userId);
-            if (f) {
+            if (f) {                
                 const token = f.notificationToken;
                 if (token) {
 
@@ -64,10 +65,24 @@ export const addTaskInQueueFromNewPostNotification = async (friends : Map<string
                         image,
                         createdAt: new Date(),
                         description: "New Post",
-                        Type: "video",
+                        Type: "post",
                         isvew: false,
                     };
-                    const s = await newPostNotificationQueue.add('newPostNotificationQueue', notification);
+                    console.log('addTaskInQueueFromNewPostNotification', notification);
+                    
+                    await newPostNotificationQueue.add('newPostNotificationQueue', notification);
+                } else {
+                    f.notification.push({
+                        userId: id,
+                        name,
+                        image,
+                        createdAt: new Date(),
+                        description: "New Post",
+                        Type: "post",
+                        isvew: false,
+                    });
+
+                    await f.save();
                 }
             }
         });
@@ -75,3 +90,4 @@ export const addTaskInQueueFromNewPostNotification = async (friends : Map<string
         console.log('cannot addTaskInQueue');
     }
 }
+

@@ -4,7 +4,7 @@
   "main": "/build/bin/www",
   "scripts": {
     "build": "tsc-watch --onSuccess \"npm run start\"",
-    "start": "node ./build/bin/www",
+    "start": "node ./build/bin/www && ./build/lib/bullmqWorker",
     "bullmqworker": "node ./build/lib/bullmqWorker",
     "dev": "ts-node src/app.ts",
     "lint": "eslint 'src/**/*.{ts,js}'"

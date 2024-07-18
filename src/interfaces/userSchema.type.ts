@@ -38,7 +38,7 @@ export interface NotificationType {
     image: string | undefined
     createdAt: Date
     description: string
-    Type: string
+    Type: "post" | "comment" | "like" | "friendRequestReject"
     isvew: boolean
     token?: string
 }

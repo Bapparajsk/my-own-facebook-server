@@ -166,8 +166,8 @@ router.get("/notification", Auth.Authentication, async (req: Request, res: Respo
         return res.status(200).json({
             success: true,
             message: 'Successfully get notification',
-            notification,
-            nextPage: (user.notification.length > (page + 1) * limit)
+            notification: user.notification,
+            // nextPage: (user.notification.length > (page + 1) * limit)
         });
     } catch (error) {
         console.log(error);

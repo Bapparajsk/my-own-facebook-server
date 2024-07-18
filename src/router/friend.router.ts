@@ -93,7 +93,7 @@ router.patch('/accept-request', Auth.Authentication, async (req: express.Request
             image: user.profileImage.profileImageURL || undefined,
             createdAt: new Date(),
             description: 'accepted your friend request.',
-            Type: 'reject friend request',
+            Type: "friendRequestReject",
             isvew: false
         }
 
@@ -137,7 +137,7 @@ router.patch('/reject-request', Auth.Authentication, async (req: express.Request
             image: UserData.profileImage.profileImageURL || undefined,
             createdAt: new Date(),
             description: 'rejected your friend request.',
-            Type: 'reject friend request',
+            Type: "friendRequestReject",
             isvew: false
         }
 
