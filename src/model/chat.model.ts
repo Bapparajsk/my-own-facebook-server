@@ -3,7 +3,14 @@ import { Schema, model, Document } from 'mongoose';
 // TypeScript interface
 export interface ChatSchemaType extends Document {
     hashId: string;
-    chat: { name: string; message: string; time: Date }[];
+    chat: { 
+        sender: string; 
+        message: string; 
+        time: Date;
+    }[];
+    read: {
+        [key: string]: number | undefined;
+    };
 }
 
 // Mongoose schema
@@ -13,7 +20,7 @@ const chatSchema = new Schema<ChatSchemaType>({
         required: true,
     },
     chat: [{
-        name: {
+        sender: {
             type: String,
             required: true,
         },
@@ -26,6 +33,13 @@ const chatSchema = new Schema<ChatSchemaType>({
             default: Date.now,
         },
     }],
+    read: {
+        type: Map,
+        of: {
+            type: Schema.Types.Mixed,
+            default: undefined
+        }
+    },
 }, { timestamps: true });
 
 export const ChatModel = model<ChatSchemaType>('Chat', chatSchema);

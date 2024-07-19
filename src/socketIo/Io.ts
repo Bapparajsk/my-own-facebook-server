@@ -45,7 +45,8 @@ export function handleConnection(socket: Socket) {
 
     socket.on('send-message', async ({friendId, message}) => {
         try {
-            const userId = Map.userListBySocketId.get(socket.id)!;
+            const userId = Map.userListBySocketId.get(socket.id) as string;
+            if (!userId) throw new Error('User not found');
             const hashingId = await userHashId(userId, friendId);
 
             // Fetch user and friend data concurrently
@@ -57,21 +58,30 @@ export function handleConnection(socket: Socket) {
             if (!userData || !friendData) throw new Error('User or friend not found');
 
             // Find or create chat in a single query using upsert
-            let chat = await ChatModel.findOneAndUpdate(
-                { hashId: hashingId },
-                { $setOnInsert: { hashId: hashingId, chat: [] } },
-                { new: true, upsert: true }
-            );
+            let chat = await ChatModel.findOne({ hashId: hashingId });
+
+            if (!chat) {
+                chat = await ChatModel.create({ hashId: hashingId, chat: [] });
+            }
 
             let nodewithMe = userData.get(`chat.linkedList.${hashingId}`) as INode;
             let nodewithFriend = friendData.get(`chat.linkedList.${hashingId}`) as INode;
+
             sendMeassage(userData, friendData, nodewithMe, chat._id as string, message, hashingId, true);
             sendMeassage(friendData, userData, nodewithFriend, chat._id as string, message, hashingId, false);
 
-            chat.chat.push({ name: userData.name, message, time: new Date() });
+            chat.chat.push({ sender: userData._id as string, message, time: new Date()});
+
+
+            if (chat.read[friendId] === undefined || chat.read[friendId] === chat.chat.length - 2) {
+                chat.read[friendId] = chat.chat.length - 1;
+            }
+
+            chat.read[userId] = chat.chat.length - 1;
 
             await userData.save();
             await friendData.save();
+            await chat.save();
 
             // Get friend's socket ID
             const friendSocketID = Map.userListByUserId.get(friendId);

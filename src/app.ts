@@ -12,6 +12,7 @@ import AddRouter from './router/updateSetting.router';
 import PostRouter from './router/post.router';
 import { router } from './router/friend.router';
 import UserRouter from "./router/user.router";
+import ChatRouter from "./router/chat.router"
 
 const app: Express = express();
 
@@ -40,5 +41,6 @@ app.use('/api/user', UserRouter);
 app.use('/api/add', AddRouter);
 app.use('/api/post', PostRouter);
 app.use('/api/friend', router);
+app.use('/api/chat', ChatRouter);
 
 export default app;
