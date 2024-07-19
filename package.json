@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "/build/bin/www",
   "scripts": {
-    "build": "tsc-watch --onSuccess \"npm run start\"",
+    "build": "tsc-watch --onSuccess \"npm run bullmqworker\"",
     "start": "node ./build/bin/www && ./build/lib/bullmqWorker",
     "bullmqworker": "node ./build/lib/bullmqWorker",
     "dev": "ts-node src/app.ts",

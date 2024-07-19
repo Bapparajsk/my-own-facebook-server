@@ -12,7 +12,6 @@ const connection = {
 };
 
 
-
 // Define worker options
 const workerOptions: WorkerOptions = {
     connection,
@@ -37,7 +36,7 @@ const worker1 = new Worker('newChatNotificationQueue', async job => {
 
 // Handle errors
 worker1.on('failed', (job, err) => {
-    console.error(`Job failed with id ${job?.id}`, err);
+    console.log(`Job failed with id ${job?.id}`, err);
 });
 
 const worker2 = new Worker('friendNotificationQueue', async job => {
@@ -72,12 +71,13 @@ const worker2 = new Worker('friendNotificationQueue', async job => {
 }, workerOptions);
 
 worker2.on('failed', (job, err) => {
-    console.error(`Job failed with id ${job?.id}`, err);
+    console.log(`Job failed with id ${job?.id}`, err);
 });
 
 const worker3 = new Worker('newPostNotificationQueue', async job => {
 
     const { id, time } = job.data;
+
 
     const user = await UserModel.findById(id).select('name friends profileImage.profileImageURL');
 
@@ -94,22 +94,23 @@ const worker3 = new Worker('newPostNotificationQueue', async job => {
     }
 
     user.friends.forEach(async (value) => {
-        const friend = await UserModel.findById(value.userId).select('notificationToken');
+        const friend = await UserModel.findById(value.userId).select('notificationToken, notification');
 
+        console.log('newPostNotificationQueue', friend);
+        
         if (friend) {
             const userId = Map.userListByUserId.get(friend._id as string);
 
-            if (!userId) return;
-
             friend.notification.push(notification);
 
-            const socketId = io.sockets.sockets.get(userId);
-            if (socketId) {
-                socketId.emit('postnotification', notification);
-                return;
-            }
-
-            if (friend.notificationToken) {
+            if (userId) {
+                const socketId = io.sockets.sockets.get(userId);
+                if (socketId) {
+                    socketId.emit('postnotification', notification);
+                    return;
+                }
+            } 
+            else if (friend.notificationToken) {
                 const message = {
                     notification: {
                         title: "New Notification",
@@ -126,7 +127,6 @@ const worker3 = new Worker('newPostNotificationQueue', async job => {
                 };
 
                 const ss =  await messaging.send(message);
-                console.log(ss);
             }
 
             await friend.save();
@@ -135,5 +135,5 @@ const worker3 = new Worker('newPostNotificationQueue', async job => {
 }, workerOptions);
 
 worker3.on('failed', (job, err) => {
-    console.error(`Job failed with id ${job?.id}`, err);
+    console.log(`Job failed with id ${job?.id}`, err);
 });

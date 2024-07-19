@@ -10,6 +10,7 @@ import {updatePost} from "../utils/valediction";
 import postValediction from "../lib/postValediction";
 import UserModel from "../model/user.model";
 import { addTaskInQueueFromNewPostNotification } from "../lib/bullmqProducer";
+import { newPostNotificationQueue } from "../config/bullmq.config";
 
 const router = express.Router();
 
@@ -133,7 +134,7 @@ router.post('/add-post', Auth.Authentication, async (req, res) => {
         setNewItemInRedis(newPost).catch(error => console.log(error));
 
         await postValediction.postUploadSuccessful(accessToken);
-        await addTaskInQueueFromNewPostNotification(user.friends, user._id as string, user.name, user.profileImage.profileImageURL);
+        await newPostNotificationQueue.add('newPostNotificationQueue', {id: user._id, time: Date.now()});
         
         return res.status(200).json({
             success: true,
