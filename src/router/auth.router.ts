@@ -7,6 +7,7 @@ import {verifyOtp, verifyUser} from "../middleware/verifyOtp";
 import {addToBlacklist} from "../utils/blacklist";
 import bcrypt from "bcrypt";
 import passport, {authenticateAndRedirect} from "../config/passport.config";
+import { ActivityTypes } from "../interfaces/userSchema.type";
 
 const router = express.Router();
 
@@ -134,6 +135,14 @@ router.post('/login', async (req: Request, res: Response) => {
 
         const mach = await bcrypt.compare(password, User.password);
         if (!mach) {
+            User.activitys.push(<ActivityTypes>{
+                lable: "user-details",
+                activity: 'login',
+                createdAt: new Date(),
+                message: 'login failed with invalid password'
+            })
+            User.save().catch(err => console.log(err));
+            
             return res.status(401).json({
                 success: false,
                 message: 'invalid email or password',
@@ -141,6 +150,14 @@ router.post('/login', async (req: Request, res: Response) => {
         }
 
         const token = createJwtFromUser(<UserPayload>{userId: User._id, userName: User.name, email});
+        User.activitys.push(<ActivityTypes>{
+            lable: 'user-details',
+            activity: 'login',
+            createdAt: new Date(),
+            message: 'login successfully'
+        })
+
+        User.save().catch(err => console.log(err));
 
         return res.status(200).json({
             success: true,

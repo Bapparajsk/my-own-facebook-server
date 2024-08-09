@@ -1,10 +1,10 @@
 import { Router, Request, Response } from "express";
 import Auth from '../middleware/auth';
 import { ChatModel } from "../model/chat.model";
-import { UserSchemaType } from "../interfaces/userSchema.type";
+import { INode, ListNode, UserSchemaType } from "../interfaces/userSchema.type";
 import UserModel from "../model/user.model";
 import hashId from "../lib/userHashId";
-
+import {  } from "mongoose"
 
 const router = Router();
 
@@ -63,8 +63,8 @@ router.get("/get_chat", Auth.Authentication, async (req: Request, res: Response)
                 message: 'Invalid user id'
             });
         }
-
-        const hashingId = await hashId(user._id as string, uid);
+        
+        const hashingId = hashId(user.get("_id").toString(), uid);
         const chat = await ChatModel.findOne({ hashId: hashingId });
         
         if (chat) {
@@ -77,6 +77,55 @@ router.get("/get_chat", Auth.Authentication, async (req: Request, res: Response)
             message: 'Successfully get chat',
             chat: chat ? chat.chat : [],
             chatUser: friend
+        });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'internal server error'
+        })
+    }
+});
+
+router.get("/get_chat_list", Auth.Authentication, async (req: Request, res: Response) => {
+    try {
+        const user = req.User as UserSchemaType;
+        const ch = user.get(`chat.linkedList.${user.chat.head}`) as INode | undefined;
+
+        interface ChatList extends ListNode {
+            isActive?: boolean;
+        }
+
+        const chats: ChatList[] = [];
+        const ids: string[] = [];
+
+        while(ch) {
+            const data = ch.value;
+            ids.push(data.userId);
+            chats.push({
+                userId: data.userId,
+                name: data.name,
+                imgUrl: data.imgUrl,
+                lastMessage: data.lastMessage,
+                lastMessageTime: data.lastMessageTime,
+                chatId: data.chatId,
+                isMe: data.isMe,
+            });
+        }
+
+        if(ids.length > 0) {
+            const friends = await UserModel.find({ _id: { $in: ids } }).select('active');
+            for (let i = 0; i < ids.length; i++) {
+                chats[i].isActive = friends[i]?.active || false;
+            }
+        }
+        
+        // console.log(4);
+        return res.status(200).json({
+            success: true,
+            message: 'Successfully retrieved chat list',
+            chats: []
         });
 
     } catch (error) {

@@ -39,8 +39,7 @@ const comment = (post: PostSchemaType, body: any, user: UserSchemaType ): [boole
         id: newCommentId,
         userId: _id as string,
         userName: name,
-        userImage: profileImage.profileImageURL?
-            profileImage.profileImageURL : "https://th.bing.com/th/id/OIP.HxQNsgoNM8f0PGsA9gag8AAAAA?rs=1&pid=ImgDetMain",
+        userImage: profileImage?.profileImageURL,
         comment,
         createdAt: new Date(),
         modify: new Date()
@@ -186,6 +185,13 @@ export const updatePost = async (post: PostSchemaType, event : string, body: any
                 return [false, "invalid event"];
             }
         }
+
+        user.activitys.push({
+            lable: "post",
+            activity: event,
+            createdAt: new Date(),
+            message: message
+        });
 
         await post.save();
         await user.save();

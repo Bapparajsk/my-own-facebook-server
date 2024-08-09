@@ -1,6 +1,7 @@
 import mongoose, { Document } from 'mongoose'
 
 export interface ListNode {
+    userId: string;
     name: string;
     imgUrl: string | undefined | null;
     lastMessage: string;
@@ -49,6 +50,18 @@ export interface FriendsType {
     image: string | undefined
 }
 
+export interface ActivityTypes {
+    lable?: "post" | "email" | "friend" | "password" | "notification-token" | "user-details" | "user-details"
+    activity: "login" | "online" | "offline" | "post" | "comment" | "like" | "dislike"| "modify-comment" | "delete-comment" | "share" |
+        "description" | "friendRequestSend" | "friendRequestAccept" | "friendRequestReject" | "reciveFriendRequest" | "credentiaslsUpdate" |
+        "profileImageUpdate" | "coverImageUpdate" | "nameUpdate" | "emailUpdate" | "passwordUpdate" | "dateOfBirthUpdate" | "notificationTokenUpdate" |
+        "socialLinkUpdate" | "otpUpdate" | "friendRemove" | "chatRemove" | "notificationRemove" | "likeRemove" | "postRemove" | "reelRemove" |
+        "friendRequestRemove" | "friendRequestSendRemove" | "activityRemove" | "uiIdUpdate" | "postUpload" | "emailOtpSend" | "emailOtpVerify" | "emailOtpExprea" |
+        "set-new-password"
+    createdAt: Date;
+    message?: string;
+}
+
 export interface UserSchemaType extends Document {
     name: string
     active: boolean
@@ -80,4 +93,6 @@ export interface UserSchemaType extends Document {
     notification: NotificationType[]
     like: Set<string>
     createdAt: Date
+    activitys: ActivityTypes[]
+    uiId: string | null | undefined
 }

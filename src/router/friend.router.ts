@@ -40,6 +40,20 @@ router.put('/send-request', Auth.Authentication , async (req: express.Request, r
             image: UserData.profileImage.profileImageURL || undefined
         });
 
+        UserData.activitys.push({
+            lable: "friend",
+            activity: "friendRequestSend",
+            createdAt: new Date(),
+            message: `send friend request to ${FriendData.name}`
+        });
+
+        FriendData.activitys.push({
+            lable: "friend",
+            activity: "reciveFriendRequest",
+            createdAt: new Date(),
+            message: `received friend request from ${UserData.name}`
+        })
+
         await UserData.save();
         await FriendData.save();
 
@@ -86,6 +100,20 @@ router.patch('/accept-request', Auth.Authentication, async (req: express.Request
         // delete from Request list
         user.friendRequest.delete(friendId);
         friendData.friendRequestSend.delete(user._id as string);
+
+        user.activitys.push({
+            lable: "friend",
+            activity: "friendRequestAccept",
+            createdAt: new Date(),
+            message: `accept friend request from ${friendData.name}`
+        });
+
+        friendData.activitys.push({
+            lable: "friend",
+            activity: "friendRequestAccept",
+            createdAt: new Date(),
+            message: `accept friend request from ${user.name}`
+        })
 
         const notification: NotificationType = {
             userId: user._id as string,
@@ -145,8 +173,24 @@ router.patch('/reject-request', Auth.Authentication, async (req: express.Request
         friendData.notification.push(notification);
 
         UserData.friendRequest.delete(friendId);
-        friendData.friendRequestSend.delete(UserData._id as string);
+        friendData.friendRequestSend.delete(UserData.get("_id").toString());
 
+        UserData.activitys.push({
+            lable: "friend",
+            activity: "friendRequestReject",
+            createdAt: new Date(),
+            message: `reject friend request from ${friendData.name}`
+        });
+
+        friendData.activitys.push({
+            lable: "friend",
+            activity: "friendRequestReject",
+            createdAt: new Date(),
+            message: `reject friend request from ${UserData.name}`
+        });
+
+        await UserData.save();
+        await friendData.save();
 
         return res.status(200).json({
             success: true,
@@ -237,7 +281,7 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
 
 router.get('/get', Auth.Authentication, async (req: express.Request, res: express.Response) => {
     try {
-        const friendId = req.body.friendId as string;
+        const friendId = req.query.friendId as string;
 
         const friendData = await UserModel.findById(friendId)
             .select("_id name profileImage post reel friends createdAt");

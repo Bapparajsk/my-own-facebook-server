@@ -7,7 +7,8 @@ import {
     FriendsType,
     INode,
     ListNode,
-    resentChatType
+    resentChatType,
+    ActivityTypes
 } from '../interfaces/userSchema.type'
 import bcrypt from "bcrypt";
 
@@ -40,6 +41,7 @@ const FriendSchema: Schema<FriendsType> = new Schema({
 });
 
 const listNodeSchema = new Schema<ListNode>({
+    userId: { type: String, required: true },
     name: { type: String, required: true },
     imgUrl: { type: String, default: null },
     lastMessage: { type: String, required: true },
@@ -59,6 +61,13 @@ const chatSchema = new Schema<resentChatType>({
     head: { type: String, default: null },
     linkedList: { type: Map, of: iNodeSchema, default: {} }
 });
+
+const activitySchema: Schema<ActivityTypes> = new Schema<ActivityTypes>({
+    activity: { type: String, required: true },
+    createdAt: { type: Date, default: Date.now },
+    message: { type: String, required: false }
+});
+
 
 const userSchema: Schema<UserSchemaType> = new Schema({
     name: { type: String, required: true },
@@ -91,6 +100,8 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     notification: [{ type: NotificationSchema, default: null }],
     like: { type: Map, default: {}},
     createdAt: { type: Date, default: Date.now },
+    activitys: [{ type: activitySchema, default: null }],
+    uiId: { type: String, default: null }
 });
 
 userSchema.pre("save", async function (next) {

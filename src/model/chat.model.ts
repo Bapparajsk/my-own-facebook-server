@@ -38,7 +38,8 @@ const chatSchema = new Schema<ChatSchemaType>({
         of: {
             type: Schema.Types.Mixed,
             default: undefined
-        }
+        },
+        default: {},
     },
 }, { timestamps: true });
 

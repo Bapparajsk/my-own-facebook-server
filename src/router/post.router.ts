@@ -1,6 +1,6 @@
-import express from "express";
+import express, { Router, Request, Response } from "express";
 import Auth from '../middleware/auth';
-import { putObjectURL, getObjectURL } from "../lib/awsS3";
+import { putObjectURL, getObjectURL, deleteObject } from "../lib/awsS3";
 import jwt from 'jsonwebtoken';
 import PostModel from "../model/post.model";
 import {UserSchemaType} from "../interfaces/userSchema.type";
@@ -9,10 +9,9 @@ import { PostSchemaType } from "../interfaces/postSchema.type";
 import {updatePost} from "../utils/valediction";
 import postValediction from "../lib/postValediction";
 import UserModel from "../model/user.model";
-import { addTaskInQueueFromNewPostNotification } from "../lib/bullmqProducer";
 import { newPostNotificationQueue } from "../config/bullmq.config";
 
-const router = express.Router();
+const router = Router();
 
 export interface AccessTokenPayload {
     key: string
@@ -20,7 +19,7 @@ export interface AccessTokenPayload {
     contentType: string
 }
 
-router.get('/', Auth.Authentication, async (req: express.Request, res: express.Response) => {
+router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const page = Number.parseInt(req.query.page as string) || 0; // Default to 0 if page is not provided or invalid
         const cachedData = await getNewPost();
@@ -61,14 +60,31 @@ router.get('/', Auth.Authentication, async (req: express.Request, res: express.R
 router.post("/create-url", Auth.Authentication, async (req, res) => {
     try {
         const { fileName, contentType, userName } = req.body;
+        const user = req.User as UserSchemaType;
         let key : string = `post/${contentType === 'video/mp4' ? 'video' : 'image'}/${userName}-${Date.now()}-${fileName}`;
         const url = await putObjectURL(key, contentType);
         
         const accessToken = jwt.sign({ key, createAt: Date.now(), contentType }, process.env.JWT_SECRET!, {expiresIn : '1d'});
         await postValediction.postUploadProcess(accessToken);
 
+        user.activitys.push({
+            lable: "post",
+            activity: 'postUpload',
+            createdAt: new Date(),
+            message: `create post url`
+        });
+
+        user.save().catch(err => console.log(err));
+
         setTimeout(async () => {
-             await postValediction.postUploadTimeExpire(accessToken);
+            await postValediction.postUploadTimeExpire(accessToken);
+            user.activitys.push({
+                lable: "post",
+                activity: 'postUpload',
+                createdAt: new Date(),
+                message: `post url expire`
+            });
+            user.save().catch(err => console.log(err));
         }, (24*60*60*1000) + (60 * 1000)); // 1 day and 1 minute after expire this url
 
         return res.status(200).json({
@@ -126,6 +142,13 @@ router.post('/add-post', Auth.Authentication, async (req, res) => {
             description : description || "tathing to say",
         });
 
+        user.activitys.push({
+            lable: "post",
+            activity: "postUpload",
+            createdAt: new Date(),
+            message: `post upload, post id: ${newPost._id}`
+        })
+
         user.post.push({postId: newPost._id as string});
         await user.save();
         await newPost.save();
@@ -172,7 +195,19 @@ router.delete("/delete", Auth.Authentication, async (req: express.Request, res: 
         }
 
         user.post = user.post.filter(post => post.postId !== id);
-        await user.save();
+        
+        const activityMessage = (status: string) => `Post removal ${status}, post ID: ${id}`;
+        user.activitys.push({lable: "post" ,activity: "postRemove", createdAt: new Date(), message: activityMessage("started") });
+
+        try {
+            await deleteObject(post.contentUrl);
+            user.activitys.push({lable: "post" ,activity: "postRemove", createdAt: new Date(), message: activityMessage("successful") });
+        } catch (error) {
+            console.error(error);
+            user.activitys.push({lable: "post" ,activity: "postRemove", createdAt: new Date(), message: activityMessage("failed") });
+        } finally {
+            await user.save();
+        }
 
         return res.status(200).json({
             success: true,
@@ -281,7 +316,7 @@ router.get("/image/:key", Auth.Authentication, async (req: express.Request, res:
             success: true,
             message: "url created",
             url
-        })
+        });
 
     } catch (error) {
         console.log(error);

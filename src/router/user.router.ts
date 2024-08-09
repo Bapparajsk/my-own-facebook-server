@@ -62,7 +62,6 @@ router.post('/verify_update', Auth.Authentication, async (req: Request, res: Res
     try {
         const {data} = req.body;
         const user = req.User as UserSchemaType;
-        console.log(data);
 
         if (data.name) {
             user.name  = data.name;
@@ -70,6 +69,12 @@ router.post('/verify_update', Auth.Authentication, async (req: Request, res: Res
 
         user.role = data.role;
         user.dateOfBirth = data.dateOfBirth;
+        user.activitys.push({
+            lable: "user-details",
+            activity: 'credentiaslsUpdate',
+            createdAt: new Date(),
+            message: 'update role and dateOfBirth'
+        })
 
         await user.save();
 
@@ -99,6 +104,13 @@ router.post('/add_new_password', Auth.Authentication, async (req: Request, res: 
         }
 
         user.password = password;
+        user.activitys.push({
+            lable: "password",
+            activity: "set-new-password",
+            createdAt: new Date(),
+            message: 'password added'
+        });
+
         await user.save();
 
         return res.status(200).json({
@@ -121,6 +133,15 @@ router.get("/verify_successful", Auth.Authentication, async (req: Request, res: 
         const userData = getUser(user);
 
         const token = createJwtFromUser({userId: user._id, userName: user.name});
+
+        user.activitys.push({
+            lable: "user-details",
+            activity: 'login',
+            createdAt: new Date(),
+            message: 'login successfully'
+        })
+
+        user.save().catch(err => console.log(err));
 
         return res.status(200).json({
             success: true,
@@ -166,8 +187,8 @@ router.get("/notification", Auth.Authentication, async (req: Request, res: Respo
         return res.status(200).json({
             success: true,
             message: 'Successfully get notification',
-            notification: user.notification,
-            // nextPage: (user.notification.length > (page + 1) * limit)
+            notification: notification,
+            nextPage: (user.notification.length > (page + 1) * limit)
         });
     } catch (error) {
         console.log(error);

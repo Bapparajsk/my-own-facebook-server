@@ -28,11 +28,14 @@ router.post('/email-otp', Auth.Authentication, async (req, res) => {
         }
 
         user.otp.email = {otp: mail.otp, value: email};
+        user.activitys.push({lable: "email" ,activity: "emailOtpSend", createdAt: new Date(), message: `email otp send successfully, email is ${email}`});
+
         await user.save();
 
         // Schedule OTP removal after 5 minutes
         setTimeout(async () => {
             user.otp.email = null;
+            user.activitys.push({lable: "email" ,activity: "emailOtpExprea", createdAt: new Date(), message: `email otp expired, email is ${email}`});
             await user.save();
         }, 5 * 60 * 1000); // 5 minutes in milliseconds
 
@@ -51,10 +54,19 @@ router.post('/email-otp', Auth.Authentication, async (req, res) => {
 router.post('/verify-otp', Auth.verifyOtpFromEmail, async (req, res) => {
     try {
         const user = req.User as UserSchemaType;
-        const email = user.otp.email?.value!;
+        const email = user.otp.email?.value;
+
+        if (!email) {
+            return res.status(401).json({
+                success: false,
+                message: 'email not found'
+            });
+        }
+
         user.otp.email = null;
         if (!user.emails) user.emails = new Array<{value: string}>();
         user.emails.push({value: email});
+        user.activitys.push({lable: "email" ,activity: "emailOtpVerify", createdAt: new Date(), message: `email otp verify successfully, email is ${email}`});
         await user.save();
 
         return res.status(200).json({
@@ -100,6 +112,8 @@ router.patch('/change-password', Auth.Authentication, async (req, res) => {
         }
 
         user.password = newPassword;
+        user.activitys.push({lable: "password" ,activity: "passwordUpdate", createdAt: new Date(), message: `password update successfully`});
+
         await user.save();
 
         return res.status(200).json({
@@ -120,6 +134,7 @@ router.put('/notification-token', Auth.Authentication, async (req, res) => {
         const notificationToken = req.body.notificationToken as string;
         const user = req.User as UserSchemaType;
         user.notificationToken = notificationToken;
+        user.activitys.push({lable: "notification-token" ,activity: "notificationTokenUpdate", createdAt: new Date(), message: `notification token add successfully`});
         await user.save();
 
         return res.status(200).json({
@@ -159,6 +174,7 @@ router.patch('/change-username', Auth.Authentication, async (req, res) => {
 
         user.name = newUsername;
         user.nameUpdateTime = currentTime;
+        user.activitys.push({lable: "user-details" ,activity: "nameUpdate", createdAt: new Date(), message: `username update successfully`});
         await user.save();
 
         return res.status(200).json({
@@ -187,6 +203,7 @@ router.patch('/change-date-of-birth', Auth.Authentication, async (req, res) => {
         }
 
         user.dateOfBirth = date;
+        user.activitys.push({lable: "user-details" ,activity: "dateOfBirthUpdate", createdAt: new Date(), message: `dateOfBirth update successfully`});
         await user.save();
 
         return res.status(200).json({

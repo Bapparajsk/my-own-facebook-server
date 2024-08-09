@@ -21,7 +21,7 @@ export const putObjectURL = async (fileName: string, contentType: string): Promi
     return await getSignedUrl(s3, command, { expiresIn: 10 * 60 });  // 3 minutes after expire this url
 }
 
-export const deleteObjectURL = async (key: string) : Promise<void> => {
+export const deleteObject = async (key: string) : Promise<void> => {
 
     const Bucket = process.env.AWS_BUCKET;
 

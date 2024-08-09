@@ -4,7 +4,7 @@ export interface  CommentType {
     id: string,
     userId: string,
     userName: string,
-    userImage: string,
+    userImage: string | undefined,
     createdAt: Date
     modify: Date
     comment: string

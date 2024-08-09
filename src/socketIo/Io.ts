@@ -18,6 +18,8 @@ export function handleConnection(socket: Socket) {
             if (!user) return;
             user.active = true;
             await user.save();
+            console.log("user connect", socket.id);
+            
         } catch (error) {
             console.log("error", error);
         }
@@ -49,7 +51,7 @@ export function handleConnection(socket: Socket) {
             if (!userId) throw new Error('User not found');
             const hashingId = await userHashId(userId, friendId);
 
-            // Fetch user and friend data concurrently
+            // // Fetch user and friend data concurrently
             const [userData, friendData] = await Promise.all([
                 UserModel.findById(userId),
                 UserModel.findById(friendId)
@@ -64,8 +66,9 @@ export function handleConnection(socket: Socket) {
                 chat = await ChatModel.create({ hashId: hashingId, chat: [] });
             }
 
-            let nodewithMe = userData.get(`chat.linkedList.${hashingId}`) as INode;
-            let nodewithFriend = friendData.get(`chat.linkedList.${hashingId}`) as INode;
+            let nodewithMe = userData.get(`chat.linkedList.${hashingId}`) as INode | undefined;
+            let nodewithFriend = friendData.get(`chat.linkedList.${hashingId}`) as INode | undefined;
+
 
             sendMeassage(userData, friendData, nodewithMe, chat._id as string, message, hashingId, true);
             sendMeassage(friendData, userData, nodewithFriend, chat._id as string, message, hashingId, false);
@@ -77,6 +80,7 @@ export function handleConnection(socket: Socket) {
                 chat.read[friendId] = chat.chat.length - 1;
             }
 
+
             chat.read[userId] = chat.chat.length - 1;
 
             await userData.save();
@@ -86,10 +90,20 @@ export function handleConnection(socket: Socket) {
             // Get friend's socket ID
             const friendSocketID = Map.userListByUserId.get(friendId);
             if (friendSocketID) {
-                socket.to(friendSocketID).emit('message-sent', { friendId: userData._id, message });
+
+                const data = {
+                    senderId: userId,
+                    senderName: userData.name,
+                    senderImage: userData.profileImage?.profileImageURL,
+                    message: message,
+                }
+
+                socket.to(friendSocketID).emit(`receive-message`, data);
+                console.log("message send to friend", friendSocketID);
+                
             } else {
 
-                //send notification in friend browser using firebase
+                // //send notification in friend browser using firebase
                 if (friendData.notificationToken !== null) {
                     addTaskInQueueFromNewChatNotification(friendData.notificationToken, userData.name, message, userData.profileImage.profileImageURL)
                         .catch((error) => console.log("notification can't send"));
