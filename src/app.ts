@@ -1,6 +1,6 @@
 import 'dotenv/config'
 import './config/db.config';
-import express, {Express} from 'express';
+import express, { Express } from 'express';
 import cors from 'cors';
 import logger  from 'morgan';
 import helmet from 'helmet';
@@ -18,9 +18,9 @@ const app: Express = express();
 
 // middlewares
 app.use(cors({
-    origin: 'http://localhost:3000', // Allow only this origin
-    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allow these HTTP methods
-    credentials: true, // Allow cookies to be sent
+    // origin: 'http://localhost:3000', // Allow only this origin
+    // methods: 'GET,HEAD,PUT,PATCH,POST,DELETE', // Allow these HTTP methods
+    // credentials: true, // Allow cookies to be sent
 }));
 app.use(logger('dev'));
 app.use(helmet());

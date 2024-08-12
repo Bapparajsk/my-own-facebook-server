@@ -34,11 +34,18 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
         const hasNext = totalDocuments > ((page + 10) * 10);
         let responseData = [...cachedData, ...newPostInDb];
 
+
+        const ids: string[] = [];
         
         for (let i = 0; i < responseData.length; i++) {
             responseData[i].contentUrl = await getObjectURL(responseData[i].contentUrl);
-            const user = await UserModel.findById(responseData[i].userId).select("active");
-            responseData[i].userActive = user?.active || false;
+            ids.push(responseData[i].userId);
+        }
+
+        const users = await UserModel.find({_id: {$in: ids}}).select("active");
+
+        for (let i = 0; i < responseData.length; i++) {
+            responseData[i].userActive = users[i]?.active || false;
         }
 
         return res.status(200).json({

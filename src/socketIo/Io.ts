@@ -73,7 +73,9 @@ export function handleConnection(socket: Socket) {
             sendMeassage(userData, friendData, nodewithMe, chat._id as string, message, hashingId, true);
             sendMeassage(friendData, userData, nodewithFriend, chat._id as string, message, hashingId, false);
 
-            chat.chat.push({ sender: userData._id as string, message, time: new Date()});
+            const time = new Date();
+
+            chat.chat.push({ sender: userData._id as string, message, time: time});
 
 
             if (chat.read[friendId] === undefined || chat.read[friendId] === chat.chat.length - 2) {
@@ -96,7 +98,11 @@ export function handleConnection(socket: Socket) {
                     senderName: userData.name,
                     senderImage: userData.profileImage?.profileImageURL,
                     message: message,
+                    time: time,
                 }
+
+                console.log(data);
+                
 
                 socket.to(friendSocketID).emit(`receive-message`, data);
                 console.log("message send to friend", friendSocketID);

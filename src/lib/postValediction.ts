@@ -1,6 +1,6 @@
 import jwt from "jsonwebtoken";
 import {AccessTokenPayload} from "../router/post.router";
-import {deleteObjectURL} from "./awsS3";
+import {deleteObject} from "./awsS3";
 import {PostValedictionModel} from "../model/postValediction.model";
 
 const postUploadSuccessful = async (token: string)=> {
@@ -26,7 +26,7 @@ const postUploadTimeExpire= async (token: string) => {
             throw new Error("Invalid access token");
         }
 
-        await deleteObjectURL(key);
+        await deleteObject(key);
         await PostValedictionModel.findOneAndDelete({token});
         return true;
 

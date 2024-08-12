@@ -40,6 +40,14 @@ router.put('/send-request', Auth.Authentication , async (req: express.Request, r
             image: UserData.profileImage.profileImageURL || undefined
         });
 
+        if (!UserData.activitys) {
+            UserData.activitys = [];
+        }
+
+        if (!FriendData.activitys) {
+            FriendData.activitys = [];
+        }
+
         UserData.activitys.push({
             lable: "friend",
             activity: "friendRequestSend",
@@ -214,11 +222,17 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
         const page = parseInt(req.query.page as string, 10) || 1;
         const isAll = req.query.all as string | undefined;
 
+        console.log(1);
+        
+
         if (!['send-request', 'friends', 'request', undefined].includes(env)) {
             return res.status(400).json({ success: false, message: 'Invalid query parameter' });
         }
 
         let friendsQuery: any = {};
+
+        console.log(2);
+        
 
         switch (env) {
             case 'send-request':
@@ -244,6 +258,9 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
                 break;
         }
 
+        console.log(3);
+        
+
         let friends: any = [];
 
         if (isAll === "true") {
@@ -258,11 +275,17 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
 
         }
 
+        console.log(4);
+        
+
         for(let i = 0; i < friends.length; i++) {
             if (friends[i].profileImage?.profileImageURL && !friends[i].profileImage.profileImageURL.startsWith('http')) {
                 friends[i].profileImage.profileImageURL = await getObjectURL(friends[i].profileImage.profileImageURL);
             }
         }
+
+        console.log(5);
+        
     
         return res.status(200).json({
             success: true,

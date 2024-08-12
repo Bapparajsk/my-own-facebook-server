@@ -63,6 +63,7 @@ const chatSchema = new Schema<resentChatType>({
 });
 
 const activitySchema: Schema<ActivityTypes> = new Schema<ActivityTypes>({
+    lable: { type: String, required: false },
     activity: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
     message: { type: String, required: false }

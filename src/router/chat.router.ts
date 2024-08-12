@@ -91,7 +91,7 @@ router.get("/get_chat", Auth.Authentication, async (req: Request, res: Response)
 router.get("/get_chat_list", Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const user = req.User as UserSchemaType;
-        const ch = user.get(`chat.linkedList.${user.chat.head}`) as INode | undefined;
+        let ch = user.get(`chat.linkedList.${user.chat.head}`) as INode | undefined;
 
         interface ChatList extends ListNode {
             isActive?: boolean;
@@ -112,6 +112,7 @@ router.get("/get_chat_list", Auth.Authentication, async (req: Request, res: Resp
                 chatId: data.chatId,
                 isMe: data.isMe,
             });
+            ch = user.get(`chat.linkedList.${ch.next}`) as INode | undefined
         }
 
         if(ids.length > 0) {
