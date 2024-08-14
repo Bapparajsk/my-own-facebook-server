@@ -8,6 +8,7 @@ import { StrategyVerify } from '../middleware/AuthenticationCallback';
 import {NextFunction, Request, Response} from "express";
 import {createFrommUserVerification, createJwtFromUser} from "../helper/jsonwebtoken";
 import {UserPayload} from "../@types/types";
+import { uploadImageToS3 } from '../lib/awsS3';
 
 passport.use(<passport.Strategy>new GoogleStrategy({
     clientID: process.env.GOOGLE_CLIENT_ID!,
@@ -37,6 +38,9 @@ passport.use(<passport.Strategy>new GoogleStrategy({
             };
 
             if (photos && photos.length > 0 && photos[0].value) {
+                 // upload image to aws s3
+                const imageUrl = await uploadImageToS3(photos[0].value, displayName);
+                userDetails.profileImage = { profileImageURL: imageUrl };
                 userDetails.profileImage = { profileImageURL: photos[0].value };
             }
 

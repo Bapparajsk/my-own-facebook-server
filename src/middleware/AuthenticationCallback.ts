@@ -1,4 +1,5 @@
 import {UserSchemaType} from "../interfaces/userSchema.type";
+import { uploadImageToS3 } from "../lib/awsS3";
 import UserModel from "../model/user.model";
 
 export const StrategyVerify = async (accessToken: any, refreshToken: any, profile: any, done: (arg0: unknown, arg1: unknown) => any) => {
@@ -23,7 +24,9 @@ export const StrategyVerify = async (accessToken: any, refreshToken: any, profil
         };
 
         if (photos && photos.length > 0 && photos[0].value) {
-            userDetails.profileImage = { profileImageURL: photos[0].value };
+            // upload image to aws s3
+            const imageUrl = await uploadImageToS3(photos[0].value, displayName);
+            userDetails.profileImage = { profileImageURL: imageUrl };
         }
 
         if (emails && emails.length > 0 && emails[0].value) {
