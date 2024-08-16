@@ -12,7 +12,7 @@ const like = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean,
     }
 
     post.likeCount = post.likeCount + 1;
-    user.like.add(post._id as string);
+    user.set(`like.${post._id as string}`, post._id as string);
     return [true, "post liked"];
 }
 

@@ -6,7 +6,7 @@ import { Strategy as GitHubStrategy} from 'passport-github2';
 import { Strategy as FacebookStrategy } from 'passport-facebook';
 import { StrategyVerify } from '../middleware/AuthenticationCallback';
 import {NextFunction, Request, Response} from "express";
-import {createFrommUserVerification, createJwtFromUser} from "../helper/jsonwebtoken";
+import { createFrommUserVerification } from "../helper/jsonwebtoken";
 import {UserPayload} from "../@types/types";
 import { uploadImageToS3 } from '../lib/awsS3';
 
