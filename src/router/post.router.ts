@@ -258,8 +258,9 @@ router.patch("/update", Auth.Authentication, async (req: express.Request, res: e
             })
         }
 
-        const [ isSuccess, message ] = await updatePost(post, event, body) as [boolean, string];
-
+        const [ isSuccess, message, commentId ] = await updatePost(post, event, body) as [boolean, string, string];
+        console.log(isSuccess, message, commentId);
+        
         if (!isSuccess) {
             return res.status(402).json({
                 success: false,
@@ -269,7 +270,8 @@ router.patch("/update", Auth.Authentication, async (req: express.Request, res: e
 
         return res.status(200).json({
             success: true,
-            message: 'post update successfully'
+            message: 'post update successfully',
+            commentId
         })
 
     } catch (error) {

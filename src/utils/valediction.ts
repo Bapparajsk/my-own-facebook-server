@@ -6,8 +6,8 @@ import { v4 as uuidv4 } from "uuid";
 const set: Set<string> = new Set<string>(
     ["like", "dislike", "comment", "modify-comment", "delete-comment" ,"share", "description"]);
 
-const like = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean, string] => {
-    if (user.like.has(post._id as string)) {
+const like = (post: PostSchemaType, user: UserSchemaType ): [boolean, string] => {
+    if (user.get(`like.post._id as string`)) {
         return [false, "already liked"];
     }
 
@@ -16,21 +16,24 @@ const like = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean,
     return [true, "post liked"];
 }
 
-const dislike = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean, string] => {
-    if (!user.like.has(post._id as string)) {
+const dislike = (post: PostSchemaType, user: UserSchemaType ): [boolean, string] => {
+    console.log(user.get(`like.post._id as string`));
+    console.log(post._id);
+    
+    if (!user.get(`like.${post._id as string}`)) {
         return [false, "not liked"];
     }
 
     post.likeCount = post.likeCount - 1;
-    user.like.delete(post._id as string);
+    user.set(`like.${post._id as string}`, undefined);
     return [true, "post disliked"];
 }
 
-const comment = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean, string] => {
+const comment = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean, string, string | undefined] => {
     const { comment } = body;
 
     if (!comment) {
-        return [false, "invalid comment"];
+        return [false, "invalid comment", undefined];
     }
 
     const { _id, name, profileImage } = user;
@@ -39,15 +42,15 @@ const comment = (post: PostSchemaType, body: any, user: UserSchemaType ): [boole
         id: newCommentId,
         userId: _id as string,
         userName: name,
-        userImage: profileImage?.profileImageURL,
+        userImage: profileImage?.profileImageURL || undefined,
         comment,
         createdAt: new Date(),
         modify: new Date()
     }
 
-    post.comments.set(newCommentId, newComment);
+    post.set(`comments.${newCommentId}`, newComment);
     post.commentCount = post.commentCount + 1;
-    return [true, "comment added"];
+    return [true, "comment added", newCommentId];
 }
 
 const modifyComment = (post: PostSchemaType, body: any, user: UserSchemaType ): [boolean, string] => {
@@ -108,7 +111,7 @@ const changeDescription = (post: PostSchemaType, body: any, user: UserSchemaType
     return [true, "discussion changed"];
 }
 
-export const updatePost = async (post: PostSchemaType, event : string, body: any, ): Promise<[boolean, string]> => {
+export const updatePost = async (post: PostSchemaType, event : string, body: any, ): Promise<[boolean, string, string?]> => {
     // if event is not in set then return false
     if (!set.has(event)) return [false, "invalid event"];
 
@@ -121,9 +124,10 @@ export const updatePost = async (post: PostSchemaType, event : string, body: any
         if (!user) return [false, "user not found"];
 
         let message = "";
+        let commentId: string | undefined = undefined;
         switch (event) {
             case "like": {
-                const [isSuccess, mes] = like(post, body, user);
+                const [isSuccess, mes] = like(post, user);
                 if (!isSuccess) {
                     return [false, mes];
                 }
@@ -132,7 +136,7 @@ export const updatePost = async (post: PostSchemaType, event : string, body: any
                 break;
 
             case "dislike": {
-                const [ isSuccess, mes ] = dislike(post, body, user);
+                const [ isSuccess, mes ] = dislike(post, user);
                 if (!isSuccess) {
                     return [false, mes];
                 }
@@ -141,11 +145,12 @@ export const updatePost = async (post: PostSchemaType, event : string, body: any
                 break;
 
             case "comment": {
-                const [ isSuccess, mes ] = comment(post, body, user);
+                const [ isSuccess, mes, comId ] = comment(post, body, user);
                 if (!isSuccess) {
                     return [false, mes];
                 }
                 message = mes;
+                commentId = comId;
             }
                 break;
 
@@ -195,7 +200,7 @@ export const updatePost = async (post: PostSchemaType, event : string, body: any
 
         await post.save();
         await user.save();
-        return [true, message];
+        return [true, message, commentId];
     } catch (error) {
         console.log(error);
         return [false, "internal server error"];
