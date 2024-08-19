@@ -1,13 +1,13 @@
-import express from 'express';
+import {Router, Request, Response} from 'express';
 import Auth from '../middleware/auth';
 import UserModel from "../model/user.model";
 import {FriendsType, NotificationType, UserSchemaType} from "../interfaces/userSchema.type";
 import {addTaskInQueueFromFriendNotification} from "../lib/bullmqProducer";
 import { getObjectURL } from '../lib/awsS3';
 
-const router = express.Router();
+const router = Router();
 
-router.put('/send-request', Auth.Authentication , async (req: express.Request, res: express.Response) => {
+router.put('/send-request', Auth.Authentication , async (req: Request, res: Response) => {
     try {
         const { friendId } = req.body;
         const FriendData = await UserModel.findById(friendId).select('_id name profileImage');
@@ -79,7 +79,7 @@ router.put('/send-request', Auth.Authentication , async (req: express.Request, r
     }
 });
 
-router.patch('/accept-request', Auth.Authentication, async (req: express.Request, res: express.Response) => {
+router.patch('/accept-request', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const { friendId } = req.body;
 
@@ -153,7 +153,7 @@ router.patch('/accept-request', Auth.Authentication, async (req: express.Request
     }
 });
 
-router.patch('/reject-request', Auth.Authentication, async (req: express.Request, res: express.Response) => {
+router.patch('/reject-request', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const { friendId } = req.body;
         const UserData = req.User as UserSchemaType;
@@ -214,15 +214,13 @@ router.patch('/reject-request', Auth.Authentication, async (req: express.Request
     }
 });
 
-router.get('/get-all', Auth.Authentication, async (req: express.Request, res: express.Response) => {
+router.get('/get-all', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const user = req.User as UserSchemaType;
         const env = req.query.env as string | undefined;
         const limit = parseInt(req.query.limit as string, 10) || 10;
         const page = parseInt(req.query.page as string, 10) || 1;
         const isAll = req.query.all as string | undefined;
-
-        console.log(1);
         
 
         if (!['send-request', 'friends', 'request', undefined].includes(env)) {
@@ -230,8 +228,6 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
         }
 
         let friendsQuery: any = {};
-
-        console.log(2);
         
 
         switch (env) {
@@ -258,7 +254,6 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
                 break;
         }
 
-        console.log(3);
         
 
         let friends: any = [];
@@ -275,17 +270,13 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
 
         }
 
-        console.log(4);
-        
 
         for(let i = 0; i < friends.length; i++) {
+            friends[i].idx = i;
             if (friends[i].profileImage?.profileImageURL && !friends[i].profileImage.profileImageURL.startsWith('http')) {
                 friends[i].profileImage.profileImageURL = await getObjectURL(friends[i].profileImage.profileImageURL);
             }
         }
-
-        console.log(5);
-        
     
         return res.status(200).json({
             success: true,
@@ -302,7 +293,7 @@ router.get('/get-all', Auth.Authentication, async (req: express.Request, res: ex
     }
 });
 
-router.get('/get', Auth.Authentication, async (req: express.Request, res: express.Response) => {
+router.get('/get', Auth.Authentication, async (req: Request, res:Response) => {
     try {
         const friendId = req.query.friendId as string;
 
@@ -329,6 +320,10 @@ router.get('/get', Auth.Authentication, async (req: express.Request, res: expres
             message: 'Something went wrong',
         });
     }
+});
+
+router.post("/share-post",  async (req: Request, res: Response) => {
+
 });
 
 export { router };

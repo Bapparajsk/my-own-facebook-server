@@ -10,6 +10,8 @@ import {updatePost} from "../utils/valediction";
 import postValediction from "../lib/postValediction";
 import UserModel from "../model/user.model";
 import { newPostNotificationQueue } from "../config/bullmq.config";
+import redis from '../config/redis.config';
+import { rateLimit } from 'express-rate-limit'
 
 const router = Router();
 
@@ -18,6 +20,12 @@ export interface AccessTokenPayload {
     createAt: Date
     contentType: string
 }
+
+const postLimiter = rateLimit({
+    windowMs: 5 * 1000, // 5 seconds
+    max: 2, // Limit each IP to 1 request per windowMs
+    message: "Too many requests from this IP, please try again later."
+});
 
 router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
     try {
@@ -283,36 +291,38 @@ router.patch("/update", Auth.Authentication, async (req: express.Request, res: e
     }
 })
 
-
-router.get("/:id", Auth.Authentication, async (req: express.Request, res: express.Response) => {
+router.get("/onepost", postLimiter, async (req, res) => {
     try {
-        const id = req.params.id;
-
-        const post = await PostModel.findById(id) as PostSchemaType;
-
-        if(!post) {
-            return res.status(404).json({
-                success: false,
-                message: 'invalid id'
-            })
-        }
+        const id = req.query.postid as string;
+        const ip = req.ip;
+        console.log(ip);
         
-        post.contentUrl  = await getObjectURL(post.contentUrl);
 
-        return res.status(200).json({
-            success: true,
-            post,
-            message: "post found"
-        })
+        if (!id) {
+            return res.status(404).json({ success: false, message: 'ID not found' });
+        }
+
+        let post: string | PostSchemaType | null = await redis.get(id);
+        
+        if(typeof post === 'string') {
+            post = JSON.parse(post) as PostSchemaType;
+            post.contentUrl =  await getObjectURL(post.contentUrl);
+        } else if (post === null) {
+            post = await PostModel.findById(id) as PostSchemaType | null;
+            if (post) {
+                post.contentUrl = await getObjectURL(post.contentUrl);
+                redis.set(id, JSON.stringify(post));
+            }
+        }
+
+        return res.status(200).json({ success: true, post, message: "Post found" });
 
     } catch (error) {
-        console.log(error);
-        return res.status(500).json({
-            success: false,
-            message: 'internal server error'
-        })
+        console.error(error);
+        return res.status(500).json({ success: false, message: 'Internal server error' });
     }
 });
+
 
 router.get("/image/:key", Auth.Authentication, async (req: express.Request, res: express.Response) => {
     try {
