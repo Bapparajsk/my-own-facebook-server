@@ -10,7 +10,7 @@ export const getObjectURL = async (key: string) : Promise<string> => {
         Key: key,
     });
 
-    return await getSignedUrl(s3, command);
+    return await getSignedUrl(s3, command, { expiresIn: 24 * 60 * 60 });  // 1 day after expire this url
 }
 
 export const putObjectURL = async (fileName: string, contentType: string): Promise<string>  => {

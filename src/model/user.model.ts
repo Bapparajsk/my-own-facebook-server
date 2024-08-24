@@ -32,6 +32,7 @@ const NotificationSchema: Schema<NotificationType> = new Schema<NotificationType
     Type: { type: String, required: true },
     isvew: { type: Boolean, default: false },
     token: { type: String, default: null },
+    link: { type: String, default: null }
 });
 
 const FriendSchema: Schema<FriendsType> = new Schema({

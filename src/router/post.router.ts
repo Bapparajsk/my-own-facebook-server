@@ -5,7 +5,7 @@ import jwt from 'jsonwebtoken';
 import PostModel from "../model/post.model";
 import {UserSchemaType} from "../interfaces/userSchema.type";
 import {setNewItemInRedis, getNewPost } from "../lib/redis";
-import { PostSchemaType } from "../interfaces/postSchema.type";
+import { CommentType, PostSchemaType } from "../interfaces/postSchema.type";
 import {updatePost} from "../utils/valediction";
 import postValediction from "../lib/postValediction";
 import UserModel from "../model/user.model";
@@ -30,16 +30,39 @@ const postLimiter = rateLimit({
 router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const page = Number.parseInt(req.query.page as string) || 0; // Default to 0 if page is not provided or invalid
+        const user = req.User as UserSchemaType;
+        if (page < 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'invalid page number'
+            })
+        }
+
+        const cashId = `post-page-${page}-${user._id}`;
+
+        const cash = await redis.get(cashId);
+
+        const totalDocuments = await PostModel.countDocuments();
+        const hasNext = totalDocuments > ((page + 10) * 10);
+
+        if (cash) {            
+            return res.status(200).json({
+                success: true,
+                data: await JSON.parse(cash),
+                hasNext: true,
+                page : hasNext ? page + 1 : 0,
+            });
+        }
+
         const cachedData = await getNewPost();
 
-        const [newPostInDb, totalDocuments] = await Promise.all([
+        const [newPostInDb] = await Promise.all([
             PostModel.find()
                 .sort({ createdAt: -1 })
                 .skip(page * 10)
                 .limit(10),
-            PostModel.countDocuments()
         ]);
-        const hasNext = totalDocuments > ((page + 10) * 10);
+        
         let responseData = [...cachedData, ...newPostInDb];
 
 
@@ -55,6 +78,8 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
         for (let i = 0; i < responseData.length; i++) {
             responseData[i].userActive = users[i]?.active || false;
         }
+
+        redis.set(cashId, JSON.stringify(responseData), 'EX', 60 * 3);
 
         return res.status(200).json({
             success: true,
@@ -267,7 +292,6 @@ router.patch("/update", Auth.Authentication, async (req: express.Request, res: e
         }
 
         const [ isSuccess, message, commentId ] = await updatePost(post, event, body) as [boolean, string, string];
-        console.log(isSuccess, message, commentId);
         
         if (!isSuccess) {
             return res.status(402).json({
@@ -294,32 +318,66 @@ router.patch("/update", Auth.Authentication, async (req: express.Request, res: e
 router.get("/onepost", postLimiter, async (req, res) => {
     try {
         const id = req.query.postid as string;
-        const ip = req.ip;
-        console.log(ip);
         
-
         if (!id) {
             return res.status(404).json({ success: false, message: 'ID not found' });
         }
 
         let post: string | PostSchemaType | null = await redis.get(id);
-        
+
         if(typeof post === 'string') {
             post = JSON.parse(post) as PostSchemaType;
-            post.contentUrl =  await getObjectURL(post.contentUrl);
+
         } else if (post === null) {
             post = await PostModel.findById(id) as PostSchemaType | null;
-            if (post) {
-                post.contentUrl = await getObjectURL(post.contentUrl);
-                redis.set(id, JSON.stringify(post));
-            }
+            if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+            post.contentUrl = await getObjectURL(post.contentUrl);
+            redis.set(id, JSON.stringify(post), 'EX', 60 * 60 * 24);
         }
+
+        post.userId = "undefined";
+        post.comments = new Map<string, CommentType>();
+
+        // console.log(post);
+        
 
         return res.status(200).json({ success: true, post, message: "Post found" });
 
     } catch (error) {
         console.error(error);
         return res.status(500).json({ success: false, message: 'Internal server error' });
+    }
+});
+
+router.get("/get-comment", Auth.Authentication, async (req: Request, res: Response) => {
+    try {
+        const id = req.query.id as string;
+
+        if(!id) return res.status(404).json({ success: false, message: "id is not found" });
+
+        let comment: string | Map<string, CommentType> | null = await redis.get(`comment-${id}`);
+
+        if (typeof comment === "string") {
+            comment = JSON.parse(comment) as Map<string, CommentType>;
+        } else if (comment === null) {
+            const post = await PostModel.findById(id) as PostSchemaType | null;
+            if (!post) if (!post) return res.status(404).json({ success: false, message: 'Post not found' });
+
+            comment = post.comments;
+            redis.set(`comment-${id}`, JSON.stringify(comment));
+        }
+
+        console.log(comment);
+        
+
+        return res.status(200).json({ success: true, comment, message: "comment found" });
+
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'internal server error'
+        })
     }
 });
 

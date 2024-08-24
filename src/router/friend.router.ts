@@ -1,13 +1,18 @@
-import {Router, Request, Response} from 'express';
+import { Router, Request, Response } from 'express';
 import Auth from '../middleware/auth';
 import UserModel from "../model/user.model";
-import {FriendsType, NotificationType, UserSchemaType} from "../interfaces/userSchema.type";
-import {addTaskInQueueFromFriendNotification} from "../lib/bullmqProducer";
+import { FriendsType, NotificationType, UserSchemaType } from "../interfaces/userSchema.type";
+import { addTaskInQueueFromFriendNotification } from "../lib/bullmqProducer";
 import { getObjectURL } from '../lib/awsS3';
+import PostModel from '../model/post.model';
+import redis from '../config/redis.config';
+import SocketMap from '../lib/activeUserList';
+import io from '../bin/www';
+import { Socket } from 'socket.io';
 
 const router = Router();
 
-router.put('/send-request', Auth.Authentication , async (req: Request, res: Response) => {
+router.put('/send-request', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const { friendId } = req.body;
         const FriendData = await UserModel.findById(friendId).select('_id name profileImage');
@@ -24,7 +29,7 @@ router.put('/send-request', Auth.Authentication , async (req: Request, res: Resp
             UserData.friendRequestSend = new Map<string, FriendsType>();
         }
 
-        if(!FriendData.friendRequest) {
+        if (!FriendData.friendRequest) {
             FriendData.friendRequest = new Map<string, FriendsType>();
         }
 
@@ -209,7 +214,7 @@ router.patch('/reject-request', Auth.Authentication, async (req: Request, res: R
         console.log(error)
         res.status(400).send({
             success: false,
-            message: 'Something went wrong',
+            message: 'internal server error',
         });
     }
 });
@@ -221,20 +226,43 @@ router.get('/get-all', Auth.Authentication, async (req: Request, res: Response) 
         const limit = parseInt(req.query.limit as string, 10) || 10;
         const page = parseInt(req.query.page as string, 10) || 1;
         const isAll = req.query.all as string | undefined;
-        
+
 
         if (!['send-request', 'friends', 'request', undefined].includes(env)) {
             return res.status(400).json({ success: false, message: 'Invalid query parameter' });
         }
 
         let friendsQuery: any = {};
-        
+
+        const re: string[] = [];
+
+        if (env) {
+            re.push(env);
+        }
+        re.push(limit.toString());
+        re.push(page.toString());
+        if (isAll) {
+            re.push(isAll);
+        }
+
+        const reData = re.join('-');
+
+        const cacheData = await redis.get(`friend-${user._id}-${reData}`);
+
+        // if (cacheData) {
+        //     return res.status(200).json({
+        //         success: true,
+        //         message: 'Successfully getting all friends',
+        //         friends: JSON.parse(cacheData)
+        //     });
+        // }
+
 
         switch (env) {
             case 'send-request':
             case undefined:
                 friendsQuery = {
-                    _id: { 
+                    _id: {
                         $nin: [
                             ...Array.from(user.friends.keys()),
                             ...Array.from(user.friendRequest.keys()),
@@ -254,30 +282,39 @@ router.get('/get-all', Auth.Authentication, async (req: Request, res: Response) 
                 break;
         }
 
-        
-
         let friends: any = [];
 
         if (isAll === "true") {
             friends = await UserModel.find(friendsQuery)
-            .select('_id name role profileImage active')
+                .select('_id name role profileImage active')
         }
         else {
             friends = await UserModel.find(friendsQuery)
-            .select('_id name role profileImage active')
-            .skip((page - 1) * limit)
-            .limit(limit);
+                .select('_id name role profileImage active')
+                .skip((page - 1) * limit)
+                .limit(limit);
 
         }
 
 
-        for(let i = 0; i < friends.length; i++) {
-            friends[i].idx = i;
-            if (friends[i].profileImage?.profileImageURL && !friends[i].profileImage.profileImageURL.startsWith('http')) {
-                friends[i].profileImage.profileImageURL = await getObjectURL(friends[i].profileImage.profileImageURL);
+        // Convert each document to a plain object and add the index
+        friends = await Promise.all(friends.map(async (friend: any, index: any) => {
+            let friendObj = friend.toObject(); // Convert to plain object
+            friendObj.idx = index; // Add the index
+
+            // Check and update the profileImageURL if needed
+            if (friendObj.profileImage?.profileImageURL && !friendObj.profileImage.profileImageURL.startsWith('http')) {
+                friendObj.profileImage.profileImageURL = await getObjectURL(friendObj.profileImage.profileImageURL);
             }
-        }
-    
+
+            return friendObj; // Return the modified object
+        }));
+
+        redis.set(`friend-${user._id}-${reData}`, JSON.stringify(friends), 'EX', 60 * 60 * 24).catch((e) => console.log(e));
+
+        console.log(friends);
+
+
         return res.status(200).json({
             success: true,
             message: 'Successfully getting all friends',
@@ -293,7 +330,7 @@ router.get('/get-all', Auth.Authentication, async (req: Request, res: Response) 
     }
 });
 
-router.get('/get', Auth.Authentication, async (req: Request, res:Response) => {
+router.get('/get', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const friendId = req.query.friendId as string;
 
@@ -315,14 +352,82 @@ router.get('/get', Auth.Authentication, async (req: Request, res:Response) => {
 
     } catch (error) {
         console.log(error)
-        res.status(400).send({
-            success: false,
-            message: 'Something went wrong',
-        });
+        res.status(400).send({ success: false, message: 'Something went wrong' });
     }
 });
 
-router.post("/share-post",  async (req: Request, res: Response) => {
+
+router.post("/share-post", Auth.Authentication, async (req: Request, res: Response) => {
+    try {
+        const { friendId, postId } = req.body as { friendId: string; postId: string };
+
+        // Validate input
+        if (!friendId || !postId) return res.status(400).json({ success: false, message: 'Invalid request' });
+
+        // Fetch friend and post data concurrently
+        const [friendData, postData] = await Promise.all([
+            UserModel.findById(friendId),
+            PostModel.findById(postId)
+        ]);
+
+        // If either friend or post is not found, return 404
+        if (!friendData || !postData) return res.status(404).json({ success: false, message: 'Friend or post not found' });
+
+        const userData = req.User as UserSchemaType;
+        const socketId = SocketMap.userListByUserId.get(friendId);
+        let isSent = false;
+
+        // If friend is connected via socket, send a real-time update
+        if (socketId) {
+            const socket = io.sockets.sockets.get(socketId);
+            console.log(socketId);
+
+            const post = {
+                userId: postData.userId,
+                userName: postData.name,
+                userImage: userData.profileImage.profileImageURL,
+                userActive: userData.active,
+                postId
+            };
+
+            if (socket) {
+
+                socket.emit('new-post', post);
+                isSent = true;
+            }
+        }
+
+        // Prepare a notification for the friend
+        const notification: NotificationType = {
+            userId: userData._id as string,
+            name: userData.name,
+            image: friendData.profileImage?.profileImageURL,
+            createdAt: new Date(),
+            description: 'shared your post.',
+            Type: "post",
+            isvew: false,
+            link: `/share-post?postId=${postId}`
+        };
+
+        // If the post was not sent via socket, add it to the queue for sending notification via firebase
+        if (!isSent && friendData.notificationToken) {
+            await addTaskInQueueFromFriendNotification(notification, friendData.notificationToken, friendData._id as string);
+        }
+
+        // Save the notification to the friend's data
+        if (!friendData.notification) {
+            friendData.notification = [];
+        }
+
+        friendData.notification.push(notification);
+        await friendData.save();
+
+        return res.status(200).json({ success: true, message: 'Successfully shared post' });
+
+    } catch (error) {
+        console.error(error);
+        return res.status(400).json({ success: false, message: 'internal server error' });
+    }
 
 });
 

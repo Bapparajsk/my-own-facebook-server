@@ -42,6 +42,7 @@ export interface NotificationType {
     Type: "post" | "comment" | "like" | "friendRequestReject"
     isvew: boolean
     token?: string
+    link?: string
 }
 
 export interface FriendsType {

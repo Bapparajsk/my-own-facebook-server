@@ -4,7 +4,7 @@ import { addTaskInQueueFromNewChatNotification } from '../lib/bullmqProducer';
 import { ChatModel } from "../model/chat.model";
 import userHashId from "../lib/userHashId";
 import UserModel from "../model/user.model";
-import {INode, ListNode, UserSchemaType} from "../interfaces/userSchema.type";
+import {INode, UserSchemaType} from "../interfaces/userSchema.type";
 import { sendMeassage } from '../lib/io';
 
 
