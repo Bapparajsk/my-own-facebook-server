@@ -1,4 +1,4 @@
-import {model, Schema} from "mongoose";
+import { model, Schema } from "mongoose";
 import {
     UserSchemaType,
     OtpSchema,
@@ -50,14 +50,14 @@ const listNodeSchema = new Schema<ListNode>({
     chatId: { type: String, required: true },
     isMe: { type: Boolean, required: true }
 });
-  
+
 const iNodeSchema = new Schema<INode>({
     uid: { type: String, required: true },
     value: { type: listNodeSchema, required: true },
     next: { type: String, default: null },
     prev: { type: String, default: null }
 });
-  
+
 const chatSchema = new Schema<resentChatType>({
     head: { type: String, default: null },
     linkedList: { type: Map, of: iNodeSchema, default: {} }
@@ -78,7 +78,10 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     role: { type: String, required: false },
     dateOfBirth: { type: DateOfBirthSchema, default: {} },
     notificationToken: { type: String, required: false, default: null },
-    emails: [ { value: { type: String, required: true }} ],
+    emails: [
+        { value: { type: String, required: true } },
+        { isPrimary: { type: Boolean, default: false } }
+    ],
     password: { type: String, required: false },
     profileImage: {
         coverImageURL: { type: String, required: false },
@@ -100,7 +103,7 @@ const userSchema: Schema<UserSchemaType> = new Schema({
     friendRequestSend: { type: Map, of: FriendSchema, default: {} },
     chat: { type: chatSchema, required: true },
     notification: [{ type: NotificationSchema, default: null }],
-    like: { type: Map, default: {}},
+    like: { type: Map, default: {} },
     createdAt: { type: Date, default: Date.now },
     activitys: [{ type: activitySchema, default: null }],
     uiId: { type: String, default: null }
@@ -117,7 +120,7 @@ userSchema.pre("save", async function (next) {
         user.password = await bcrypt.hash(user.password, salt);
     } catch (err) {
         console.log('err', err);
-    }finally {
+    } finally {
         next();
     }
 });

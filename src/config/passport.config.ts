@@ -45,7 +45,7 @@ passport.use(<passport.Strategy>new GoogleStrategy({
             }
 
             if (emails && emails.length > 0 && emails[0].value) {
-                userDetails.emails = [{ value: emails[0].value }];
+                userDetails.emails = [{ value: emails[0].value, isPrimary: false }];
             }
 
             const newUser = new UserModel(userDetails);

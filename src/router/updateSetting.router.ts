@@ -64,8 +64,8 @@ router.post('/verify-otp', Auth.verifyOtpFromEmail, async (req, res) => {
         }
 
         user.otp.email = null;
-        if (!user.emails) user.emails = new Array<{value: string}>();
-        user.emails.push({value: email});
+        if (!user.emails) user.emails = new Array<{value: string, isPrimary: boolean}>();
+        user.emails.push({value: email, isPrimary: false});
         user.activitys.push({lable: "email" ,activity: "emailOtpVerify", createdAt: new Date(), message: `email otp verify successfully, email is ${email}`});
         await user.save();
 
@@ -151,7 +151,7 @@ router.put('/notification-token', Auth.Authentication, async (req, res) => {
 
 router.patch('/change-username', Auth.Authentication, async (req, res) => {
     try {
-        const newUsername = req.body.username as string;
+        const newUsername = req.body.name as string;
         const user = req.User as UserSchemaType;
 
         if (!newUsername || newUsername.length < 5) {
@@ -209,6 +209,37 @@ router.patch('/change-date-of-birth', Auth.Authentication, async (req, res) => {
         return res.status(200).json({
             success: true,
             message: 'change dateOfBirth successfully',
+        })
+
+    } catch (error) {
+        return res.status(401).send({
+            success: false,
+            message: 'internal server error',
+        })
+    }
+});
+
+router.patch('/change-role', Auth.Authentication, async (req, res) => {
+    try {
+        const role = req.body.role as string;
+        const user = req.User as UserSchemaType;
+
+        if (!role || !["Full Stack Developer", "Software Engineering", "Software Developer Engineering", "Development and Operations",
+            "Ethical Hacker", "Front end Developer", "Back end Developer", "Others"
+        ].includes(role)) {
+            return res.status(401).json({
+                success: false,
+                message: 'invalid role',
+            });
+        }
+
+        user.role = role;
+        user.activitys.push({lable: "user-details" ,activity: "roleUpdate", createdAt: new Date(), message: `role update successfully`});
+        await user.save();
+
+        return res.status(200).json({
+            success: true,
+            message: 'change role successfully',
         })
 
     } catch (error) {

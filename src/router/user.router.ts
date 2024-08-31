@@ -1,9 +1,9 @@
-import {Router, Request, Response} from 'express';
+import { Router, Request, Response } from 'express';
 import Auth from "../middleware/auth";
-import {UserSchemaType} from "../interfaces/userSchema.type";
-import {UserPayload} from "../@types/types";
-import {sendOtp} from "../helper/sendOTP";
-import {createJwtFromUser} from "../helper/jsonwebtoken";
+import { UserSchemaType } from "../interfaces/userSchema.type";
+import { UserPayload } from "../@types/types";
+import { sendOtp } from "../helper/sendOTP";
+import { createJwtFromUser } from "../helper/jsonwebtoken";
 
 const router = Router();
 
@@ -60,11 +60,11 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
 
 router.post('/verify_update', Auth.Authentication, async (req: Request, res: Response) => {
     try {
-        const {data} = req.body;
+        const { data } = req.body;
         const user = req.User as UserSchemaType;
 
         if (data.name) {
-            user.name  = data.name;
+            user.name = data.name;
         }
 
         user.role = data.role;
@@ -132,7 +132,7 @@ router.get("/verify_successful", Auth.Authentication, async (req: Request, res: 
 
         const userData = getUser(user);
 
-        const token = createJwtFromUser({userId: user._id, userName: user.name});
+        const token = createJwtFromUser({ userId: user._id, userName: user.name });
 
         user.activitys.push({
             lable: "user-details",
@@ -198,5 +198,6 @@ router.get("/notification", Auth.Authentication, async (req: Request, res: Respo
         })
     }
 });
+
 
 export default router;

@@ -58,7 +58,8 @@ export interface ActivityTypes {
         "profileImageUpdate" | "coverImageUpdate" | "nameUpdate" | "emailUpdate" | "passwordUpdate" | "dateOfBirthUpdate" | "notificationTokenUpdate" |
         "socialLinkUpdate" | "otpUpdate" | "friendRemove" | "chatRemove" | "notificationRemove" | "likeRemove" | "postRemove" | "reelRemove" |
         "friendRequestRemove" | "friendRequestSendRemove" | "activityRemove" | "uiIdUpdate" | "postUpload" | "emailOtpSend" | "emailOtpVerify" | "emailOtpExprea" |
-        "set-new-password"
+        "set-new-password" | "delete-post" | "delete-reel" | "delete-notification" | "delete-chat" | "delete-friend" | "delete-friendRequest" | "delete-friendRequestSend" |
+        "roleUpdate"
     createdAt: Date;
     message?: string;
 }
@@ -70,7 +71,7 @@ export interface UserSchemaType extends Document {
     role: string,
     dateOfBirth: DateOfBirthType,
     notificationToken: string,
-    emails: { value: string }[]
+    emails: { value: string, isPrimary: boolean }[]
     password: string
     profileImage: {
         coverImageURL?: string
