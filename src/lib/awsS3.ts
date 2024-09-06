@@ -20,7 +20,7 @@ export const putObjectURL = async (fileName: string, contentType: string): Promi
         ContentType: contentType
     });
 
-    return await getSignedUrl(s3, command, { expiresIn: 10 * 60 });  // 3 minutes after expire this url
+    return await getSignedUrl(s3, command, { expiresIn: 10 * 60 });  // 10 minutes after expire this url
 }
 
 export const deleteObject = async (key: string) : Promise<void> => {

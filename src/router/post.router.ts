@@ -3,10 +3,10 @@ import Auth from '../middleware/auth';
 import { putObjectURL, getObjectURL, deleteObject } from "../lib/awsS3";
 import jwt from 'jsonwebtoken';
 import PostModel from "../model/post.model";
-import {UserSchemaType} from "../interfaces/userSchema.type";
-import {setNewItemInRedis, getNewPost } from "../lib/redis";
+import { UserSchemaType } from "../interfaces/userSchema.type";
+import { setNewItemInRedis, getNewPost } from "../lib/redis";
 import { CommentType, PostSchemaType } from "../interfaces/postSchema.type";
-import {updatePost} from "../utils/valediction";
+import { updatePost } from "../utils/valediction";
 import postValediction from "../lib/postValediction";
 import UserModel from "../model/user.model";
 import { newPostNotificationQueue } from "../config/bullmq.config";
@@ -45,12 +45,12 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
         const totalDocuments = await PostModel.countDocuments();
         const hasNext = totalDocuments > ((page + 10) * 10);
 
-        if (cash) {            
+        if (cash) {
             return res.status(200).json({
                 success: true,
                 data: await JSON.parse(cash),
                 hasNext: true,
-                page : hasNext ? page + 1 : 0,
+                page: hasNext ? page + 1 : 0,
             });
         }
 
@@ -62,18 +62,18 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
                 .skip(page * 10)
                 .limit(10),
         ]);
-        
+
         let responseData = [...cachedData, ...newPostInDb];
 
 
         const ids: string[] = [];
-        
+
         for (let i = 0; i < responseData.length; i++) {
             responseData[i].contentUrl = await getObjectURL(responseData[i].contentUrl);
             ids.push(responseData[i].userId);
         }
 
-        const users = await UserModel.find({_id: {$in: ids}}).select("active");
+        const users = await UserModel.find({ _id: { $in: ids } }).select("active");
 
         for (let i = 0; i < responseData.length; i++) {
             responseData[i].userActive = users[i]?.active || false;
@@ -85,9 +85,9 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
             success: true,
             data: responseData,
             hasNext,
-            page : hasNext ? page + 1 : 0,
+            page: hasNext ? page + 1 : 0,
         });
-        
+
     } catch (error) {
         console.log(error);
         return res.status(500).json({
@@ -101,10 +101,10 @@ router.post("/create-url", Auth.Authentication, async (req, res) => {
     try {
         const { fileName, contentType, userName } = req.body;
         const user = req.User as UserSchemaType;
-        let key : string = `post/${contentType === 'video/mp4' ? 'video' : 'image'}/${userName}-${Date.now()}-${fileName}`;
+        let key: string = `post/${contentType === 'video/mp4' ? 'video' : 'image'}/${userName}-${Date.now()}-${fileName}`;
         const url = await putObjectURL(key, contentType);
-        
-        const accessToken = jwt.sign({ key, createAt: Date.now(), contentType }, process.env.JWT_SECRET!, {expiresIn : '1d'});
+
+        const accessToken = jwt.sign({ key, createAt: Date.now(), contentType }, process.env.JWT_SECRET!, { expiresIn: '1d' });
         await postValediction.postUploadProcess(accessToken);
 
         user.activitys.push({
@@ -125,7 +125,7 @@ router.post("/create-url", Auth.Authentication, async (req, res) => {
                 message: `post url expire`
             });
             user.save().catch(err => console.log(err));
-        }, (24*60*60*1000) + (60 * 1000)); // 1 day and 1 minute after expire this url
+        }, (24 * 60 * 60 * 1000) + (60 * 1000)); // 1 day and 1 minute after expire this url
 
         return res.status(200).json({
             success: true,
@@ -170,7 +170,7 @@ router.post('/add-post', Auth.Authentication, async (req, res) => {
                 message: 'invalid access token'
             })
         }
-        
+
         const user = req.User as UserSchemaType;
         const newPost = new PostModel({
             userId: user._id,
@@ -179,7 +179,7 @@ router.post('/add-post', Auth.Authentication, async (req, res) => {
             createdAt: createAt,
             contentUrl: key,
             contentType,
-            description : description || "tathing to say",
+            description: description || "tathing to say",
         });
 
         user.activitys.push({
@@ -189,7 +189,7 @@ router.post('/add-post', Auth.Authentication, async (req, res) => {
             message: `post upload, post id: ${newPost._id}`
         })
 
-        user.post.push({postId: newPost._id as string});
+        user.post.push({ postId: newPost._id as string });
         await user.save();
         await newPost.save();
 
@@ -197,8 +197,8 @@ router.post('/add-post', Auth.Authentication, async (req, res) => {
         setNewItemInRedis(newPost).catch(error => console.log(error));
 
         await postValediction.postUploadSuccessful(accessToken);
-        await newPostNotificationQueue.add('newPostNotificationQueue', {id: user._id, time: Date.now()});
-        
+        await newPostNotificationQueue.add('newPostNotificationQueue', { id: user._id, time: Date.now() });
+
         return res.status(200).json({
             success: true,
             message: 'Successfully created!',
@@ -235,16 +235,16 @@ router.delete("/delete", Auth.Authentication, async (req: express.Request, res: 
         }
 
         user.post = user.post.filter(post => post.postId !== id);
-        
+
         const activityMessage = (status: string) => `Post removal ${status}, post ID: ${id}`;
-        user.activitys.push({lable: "post" ,activity: "postRemove", createdAt: new Date(), message: activityMessage("started") });
+        user.activitys.push({ lable: "post", activity: "postRemove", createdAt: new Date(), message: activityMessage("started") });
 
         try {
             await deleteObject(post.contentUrl);
-            user.activitys.push({lable: "post" ,activity: "postRemove", createdAt: new Date(), message: activityMessage("successful") });
+            user.activitys.push({ lable: "post", activity: "postRemove", createdAt: new Date(), message: activityMessage("successful") });
         } catch (error) {
             console.error(error);
-            user.activitys.push({lable: "post" ,activity: "postRemove", createdAt: new Date(), message: activityMessage("failed") });
+            user.activitys.push({ lable: "post", activity: "postRemove", createdAt: new Date(), message: activityMessage("failed") });
         } finally {
             await user.save();
         }
@@ -291,8 +291,8 @@ router.patch("/update", Auth.Authentication, async (req: express.Request, res: e
             })
         }
 
-        const [ isSuccess, message, commentId ] = await updatePost(post, event, body) as [boolean, string, string];
-        
+        const [isSuccess, message, commentId] = await updatePost(post, event, body) as [boolean, string, string];
+
         if (!isSuccess) {
             return res.status(402).json({
                 success: false,
@@ -318,14 +318,14 @@ router.patch("/update", Auth.Authentication, async (req: express.Request, res: e
 router.get("/onepost", postLimiter, async (req, res) => {
     try {
         const id = req.query.postid as string;
-        
+
         if (!id) {
             return res.status(404).json({ success: false, message: 'ID not found' });
         }
 
         let post: string | PostSchemaType | null = await redis.get(id);
 
-        if(typeof post === 'string') {
+        if (typeof post === 'string') {
             post = JSON.parse(post) as PostSchemaType;
 
         } else if (post === null) {
@@ -339,7 +339,7 @@ router.get("/onepost", postLimiter, async (req, res) => {
         post.comments = new Map<string, CommentType>();
 
         // console.log(post);
-        
+
 
         return res.status(200).json({ success: true, post, message: "Post found" });
 
@@ -353,7 +353,7 @@ router.get("/get-comment", Auth.Authentication, async (req: Request, res: Respon
     try {
         const id = req.query.id as string;
 
-        if(!id) return res.status(404).json({ success: false, message: "id is not found" });
+        if (!id) return res.status(404).json({ success: false, message: "id is not found" });
 
         let comment: string | Map<string, CommentType> | null = await redis.get(`comment-${id}`);
 
@@ -368,7 +368,7 @@ router.get("/get-comment", Auth.Authentication, async (req: Request, res: Respon
         }
 
         console.log(comment);
-        
+
 
         return res.status(200).json({ success: true, comment, message: "comment found" });
 
@@ -384,7 +384,7 @@ router.get("/get-comment", Auth.Authentication, async (req: Request, res: Respon
 
 router.get("/image/:key", Auth.Authentication, async (req: express.Request, res: express.Response) => {
     try {
-        
+
         const key = req.params.key as string;
 
         const url = getObjectURL(key);
