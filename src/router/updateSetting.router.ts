@@ -256,7 +256,7 @@ router.patch('/change-role', Auth.Authentication, async (req, res) => {
 
 
 // todo change profile image
-router.post('create-url-profile-picker', Auth.Authentication, async (req, res) => {
+router.post('/create-url-profile-image', Auth.Authentication, async (req, res) => {
     try {
         const { fileName, contentType } = req.body as { fileName: string, contentType: string };
 
@@ -265,11 +265,11 @@ router.post('create-url-profile-picker', Auth.Authentication, async (req, res) =
         const user = req.User as UserSchemaType;
 
         const key = `profile-images/image/${user.name}-${Date.now()}-${fileName}`;
-        const url = putObjectURL(key, 'image/png');
+        const url = await putObjectURL(key, 'image/png');
 
         const accessToken = jwt.sign({ key, createAt: Date.now(), contentType }, process.env.JWT_SECRET!, { expiresIn: '1d' });
 
-        redis.set(accessToken, key, 'EX', (60 * 60 * 24) + 60); // 1 day 1 minut in seconds
+        redis.set(accessToken, key, 'EX', (60 * 60 * 24) + 60); // * 1 day 1 minute in seconds
         user.activitys.push({ lable: "user-details", activity: "profileImageUpdate", createdAt: new Date(), message: `profile image update user created` });
 
         await user.save();
@@ -286,7 +286,7 @@ router.post('create-url-profile-picker', Auth.Authentication, async (req, res) =
     }
 });
 
-router.patch('/verefy-profile-picker', Auth.Authentication, async (req, res) => {
+router.patch('/change-profile-image', Auth.Authentication, async (req, res) => {
     const { accessToken } = req.body as { accessToken: string };
 
     // Check if accessToken exists
@@ -333,7 +333,6 @@ router.patch('/verefy-profile-picker', Auth.Authentication, async (req, res) => 
             message: 'Profile image updated successfully',
             url: url,
         });
-
     } catch (error) {
         console.error(error);
 

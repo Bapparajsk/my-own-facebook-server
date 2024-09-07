@@ -38,7 +38,7 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
             })
         }
 
-        const cashId = `post-page-${page}-${user._id}`;
+        const cashId = `post-page-${page}`;
 
         const cash = await redis.get(cashId);
 
@@ -69,7 +69,15 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
         const ids: string[] = [];
 
         for (let i = 0; i < responseData.length; i++) {
-            responseData[i].contentUrl = await getObjectURL(responseData[i].contentUrl);
+            const contentUrl = responseData[i].contentUrl;
+            let userImageKey = responseData[i].imageUrl as string;
+
+            if (!userImageKey?.startsWith("http")) {
+                userImageKey = await getObjectURL(userImageKey);
+            }
+
+            responseData[i].contentUrl = await getObjectURL(contentUrl);
+            responseData[i].imageUrl = userImageKey;
             ids.push(responseData[i].userId);
         }
 
@@ -88,6 +96,42 @@ router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
             page: hasNext ? page + 1 : 0,
         });
 
+    } catch (error) {
+        console.log(error);
+        return res.status(500).json({
+            success: false,
+            message: 'internal server error'
+        })
+    }
+});
+
+router.get("/user-post", Auth.Authentication, async (req: Request, res: Response) => {
+    try {
+        const user = req.User as UserSchemaType;
+
+        let cash = await redis.get(`post-user-${user._id}`);
+
+        if (cash) {
+            return res.status(200).json({
+                success: true,
+                message: 'Successfully get user post',
+                post: JSON.parse(cash)
+            });
+        }
+
+        const post = await PostModel.find({ userId: user._id });
+
+        for (let i = 0; i < post.length; i++) {
+            post[i].contentUrl = await getObjectURL(post[i].contentUrl);
+        }
+
+        redis.set(`post-user-${user._id}`, JSON.stringify(post), 'EX', 60 * 3);
+
+        return res.status(200).json({
+            success: true,
+            message: 'Successfully get user post',
+            post
+        });
     } catch (error) {
         console.log(error);
         return res.status(500).json({

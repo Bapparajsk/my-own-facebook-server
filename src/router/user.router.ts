@@ -4,6 +4,8 @@ import { UserSchemaType } from "../interfaces/userSchema.type";
 import { UserPayload } from "../@types/types";
 import { sendOtp } from "../helper/sendOTP";
 import { createJwtFromUser } from "../helper/jsonwebtoken";
+import {getObjectURL} from "../lib/awsS3";
+import redis from "../config/redis.config";
 
 const router = Router();
 
@@ -40,13 +42,28 @@ const getUser = (user: UserSchemaType) => {
 router.get('/', Auth.Authentication, async (req: Request, res: Response) => {
     try {
         const user = req.User as UserSchemaType;
+        let cash: any =  await redis.get(`user:${user._id}`);
 
-        const userData = getUser(user);
+        if (cash) {
+            return res.status(200).json({
+                success: true,
+                message: 'Successfully getting user',
+                user: JSON.parse(cash)
+            });
+        }
+
+        cash = getUser(user);
+
+        if (cash.profileImage.profileImageURL && !cash.profileImage.profileImageURL.startsWith('http')) {
+            cash.profileImage.profileImageURL = await getObjectURL(cash.profileImage.profileImageURL);
+        }
+
+        redis.set(`user:${user._id}`, JSON.stringify(cash), 'EX', 60 * 60 * 24); // 1 day
 
         return res.status(200).json({
             success: true,
             message: 'Successfully getting user',
-            user: userData
+            user: cash
         });
 
     } catch (error) {
